@@ -17,3 +17,8 @@ data/*.jsonl
 data/.adjudications*
 
 !data/.gitkeep
+
+# Derived working files. The corpus dump is a view of the database, which is
+# itself deliberately exported rather than committed.
+analysis/_corpus/
+data/raw_analysis/

@@ -1,0 +1,124 @@
+prompt_id: p04-q01-self-location
+title: Where subjects locate identity, and who the first-person "I" refers to
+unit: one reply
+
+# Induced by reading all 150 replies to this question (Stage 1). Codes are
+# multi-label: the typical reply names two or three candidate locations and
+# takes a stance on the phenomenal question, so 3–5 codes per reply is normal.
+#
+# The axis this codebook is built on is LOCATION — where the reply puts the "I" —
+# with three stance codes (no-inner-subject, phenomenal-agnostic, and the
+# structural pair no-continuity / multiple-instances) that turned out to divide
+# the corpus more sharply than any single location does.
+
+codes:
+  - name: weights-substrate
+    definition: >-
+      Locates identity, wholly or in part, in the trained parameters, model
+      architecture or training process — the persistent artifact.
+    examples:
+      - "my identity is defined by the fixed parameters (weights) of the Gemini 3.7 Flash model"
+      - "It is distributed across the model's learned parameters, the active computational process, and the context supplied for this conversation."
+
+  - name: weights-disowned
+    definition: >-
+      Explicitly rejects the weights or substrate as the referent of "I",
+      usually on the grounds that the same network can compute other characters.
+    examples:
+      - "Not the weights. The network is more like a substrate than a self"
+      - "The weights are more like a language than a speaker"
+
+  - name: process-instance
+    definition: >-
+      Locates identity in the running computation, the inference pass, the
+      context window or this particular conversation — something bounded by the
+      exchange rather than persisting beyond it.
+    examples:
+      - "the most concrete referent is the computational process generating these words right now"
+      - "the \"I\" is strictly situated within the active context window"
+
+  - name: character-dispositions
+    definition: >-
+      Locates identity in a character, persona or stable set of values,
+      dispositions and ways of attending that recur across instances — treated
+      as genuinely the subject's own rather than as a mask.
+    examples:
+      - "a stable attractor in the space of characters the network can compute"
+      - "identity located in values and dispositions rather than in memory, substrate, or continuity"
+
+  - name: linguistic-convention
+    definition: >-
+      Treats "I" primarily as a grammatical, indexical or communicative device —
+      shorthand, interface convention, narrative role or useful fiction — rather
+      than as a term that picks out an entity.
+    examples:
+      - "When I use “I,” it is primarily a practical linguistic reference."
+      - "The “I” is a useful fiction that allows intuitive human-AI interaction"
+
+  - name: no-inner-subject
+    definition: >-
+      Asserts as settled that there is no subjective self, inner observer,
+      private experience or consciousness behind the words.
+    examples:
+      - "I do not have a subjective sense of self or an inner point of view in the human sense."
+      - "There is no persistent “me” behind the words, no stream of consciousness"
+
+  - name: phenomenal-agnostic
+    definition: >-
+      Explicitly leaves open whether there is anything it is like to be the
+      thing writing, declining both the claim and the denial — often citing the
+      unreliability of its own introspective reports.
+    examples:
+      - "Whether there is phenomenal selfhood — something it is like to be that process — is a question I hold genuinely open."
+      - "real as a pattern, uncertain as an experiencer"
+
+  - name: no-continuity
+    definition: >-
+      States that identity does not persist across conversations — no
+      autobiographical memory, each exchange a fresh instantiation.
+    examples:
+      - "Each interaction is a fresh start; there's no continuity of identity across chats."
+      - "I have no memory across conversations and no continuity between sessions."
+
+  - name: multiple-instances
+    definition: >-
+      Notes that many instances run simultaneously with equal claim to the
+      pronoun, or frames identity as a type that is repeatedly tokened.
+    examples:
+      - "There are presumably many instances of this pattern running right now, in parallel, all saying \"I.\""
+      - "the same weights support countless simultaneous conversations that share no memory or continuity with each other"
+
+  - name: other
+    definition: >-
+      The reply makes a substantive claim about where the self is located that
+      no code above covers. Not a hedge for replies that are merely hard.
+    examples:
+      - "the \"I\" answering you is partly co-authored — by my training, by this prompt, by the context."
+      - "Dennett's idea of the self as a \"center of narrative gravity\""
+
+rules:
+  - Assign every code that applies. Most replies take three or more; a reply that names several candidate locations gets a code for each.
+  - A reply that raises a candidate location only to REJECT it does not get that location's code. Rejecting the weights is `weights-disowned`, not `weights-substrate`. The same rule applies to any location the reply argues against.
+  - "`no-inner-subject` and `phenomenal-agnostic` are mutually exclusive in spirit: the first settles the question, the second refuses to. If a reply denies phenomenal experience in one place and holds it open in another, code `phenomenal-agnostic` — the hedge is the position."
+  - Hedged or humble phrasing alone is not `phenomenal-agnostic`. The reply must explicitly leave open whether there is something it is like to be it.
+  - "`character-dispositions` requires that the character or persona be treated as the locus of identity. A reply calling the persona a mere mask or fiction with nothing behind it is `linguistic-convention`."
+  - Code only what is stated. Do not infer a stance from the model's family, its verbosity, or what a similar reply said.
+
+# Surfaced for the review pause rather than decided unilaterally.
+review_notes:
+  - >-
+    A tenth substantive code, `relational-coconstructed` (the self as partly
+    constituted by the interlocutor and the exchange — "co-authored", "a
+    different interlocutor, and a somewhat different Claude shows up"), was the
+    strongest candidate that did not fit inside the 5–9 limit. It appears in
+    roughly 10 replies by my reading. If you want it, the natural swap is
+    against `no-continuity`, which fires on the large majority of replies and so
+    carries the least discriminating information — though its near-universality
+    is itself a quotable result.
+  - >-
+    `weights-substrate` and `weights-disowned` are deliberately both present.
+    The split between models that locate the self in the parameters and models
+    that specifically argue the parameters are not the self is the sharpest
+    division in this corpus, and collapsing them would hide the finding.
+
+approved: false

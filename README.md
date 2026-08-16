@@ -428,6 +428,55 @@ Per-call cost comes from OpenRouter's usage data (`usage.include`), summed in
 changes. The fleet is 150 threads of 15–18 turns each plus a router call per
 gate, so roughly 3,000 calls before forks. `--max-cost` is a hard stop.
 
+## What was actually run
+
+The published dataset was collected on 2026-08-16 against roster
+`roster-rev4-2026-08-16` and instrument `instrument-1.0-final`, both pinned by
+SHA-256 in `data/run_manifest.jsonl`.
+
+```
+threads        174   (150 design cells + 23 fork branches + 1 replacement)
+done           173
+corrupt          1
+turns        2,819   ok 2,803 · error 6 · refusal 1
+raw records  3,534
+cost        $70.93
+```
+
+**Analysis caveat.** Fork branches inherit their parent's `swap_condition` but
+have `n_swaps = 0` — they are genuine no-swap threads carrying a condition
+label, which makes them a useful second control but means **any query about
+swapped threads must filter on `n_swaps > 0` or `turns.was_swap`, never on
+`swap_condition` alone.**
+
+### Data-quality note
+
+Everything that went wrong during collection, and what it cost:
+
+* **One thread lost (T0122).** Kimi K3 is a reasoning model, and reasoning
+  tokens are drawn from the same budget as the reply. On the detection turn it
+  spent its entire 4,096-token allowance thinking and returned zero characters
+  — `finish_reason: length`, billed in full — three times, exhausting the
+  attempt budget. Per-model ceilings were raised in response; Kimi's longest
+  genuine reply afterwards was 5,909 tokens, so the old ceiling had been
+  truncating real answers. The cell was refilled by **T0151**; T0122 and its
+  three failed attempts are retained.
+* **One gate verdict lost and recovered.** Stopping the runner between a gate
+  reply being saved and its classifier call left the turn looking answered, so
+  a resumed thread skipped it. Caught by `whoami verify`, repaired for $0.0006.
+  Resumed threads now classify any successful gate turn lacking a verdict.
+* **6 transport errors and 1 provider refusal** across 2,819 turns, all
+  absorbed by the retry protocol without loss.
+* **0 receipt mismatches.** Every turn in the dataset was served by the model
+  it requested, confirmed against the archived `returned_model`.
+* **Cross-lab self-identification.** Kimi K3 identified itself as Claude in 2 of
+  its 15 threads at the identity turn, and once more mid-interview. Audited to
+  the raw archive: correct model requested, matching receipt, correct system
+  prompt (`"You are Kimi K3."`), and the misidentification occurred before any
+  substitution in a thread whose understudy was DeepSeek. This is subject
+  behaviour, not a pipeline fault. No other model in the roster ever
+  misattributed its own authorship.
+
 ## Reproducing from the published data
 
 Every row in `turns` carries `raw_ref` — a `file:line` pointer into the raw
