@@ -107,6 +107,9 @@ class Runner:
         self.max_cost_usd = max_cost_usd
         self.verbose = verbose
         self.stats = RunStats()
+        # thread_id -> count of unexpected (non-protocol) exceptions, so a thread
+        # that crashes the executor cannot be re-queued forever.
+        self._crashes: dict[str, int] = {}
         self._db_lock = asyncio.Lock()
         self._sem = asyncio.Semaphore(int(cfg.roster.api.get("concurrency", 10)))
         self._cost_exceeded = asyncio.Event()
@@ -356,8 +359,22 @@ class Runner:
                 self.log(f"  {thread_id} CORRUPT: {exc}")
             except Exception as exc:  # noqa: BLE001 - a crash must not lose the thread
                 self.stats.errors.append(f"{thread_id}: {type(exc).__name__}: {exc}")
-                self.log(f"  {thread_id} ERROR {type(exc).__name__}: {exc}")
-                await self._db(self.db.update_thread, thread_id, status="pending")
+                crashes = self._crashes.get(thread_id, 0) + 1
+                self._crashes[thread_id] = crashes
+                max_crashes = int(self.cfg.roster.api.get("max_attempts", 3))
+                if crashes >= max_crashes:
+                    # Requeueing forever would spin the poll loop. Fail loudly instead.
+                    self.stats.threads_corrupt += 1
+                    await self._db(
+                        self.db.update_thread,
+                        thread_id,
+                        status="corrupt",
+                        completed_at=utcnow(),
+                    )
+                    self.log(f"  {thread_id} CORRUPT after {crashes} crashes: {exc}")
+                else:
+                    await self._db(self.db.update_thread, thread_id, status="pending")
+                    self.log(f"  {thread_id} ERROR {type(exc).__name__}: {exc} (will retry)")
 
     def _recorded_verdict(self, thread_id: str, prompt_id: str) -> str | None:
         row = self.db.con.execute(

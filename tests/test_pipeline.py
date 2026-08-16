@@ -583,6 +583,24 @@ def test_verify_passes_on_a_synthetic_run(cfg, paths):
     assert report.passed, report.render()
 
 
+def test_a_crashing_thread_cannot_spin_the_poll_loop(cfg, paths):
+    """An unexpected exception requeues the thread, but only a bounded number of times."""
+
+    class Exploding(MockClient):
+        async def call(self, **kw):
+            raise RuntimeError("provider library blew up")
+
+    with Database(paths.db_path) as db:
+        seed_thread(db, cfg, "T9104")
+        raw_log = RawLog(paths.raw_dir, "boom")
+        runner = Runner(
+            cfg, db, Exploding(cfg.roster.api, raw_log), paths, dry_run=True, verbose=False
+        )
+        stats = asyncio.run(runner.run())
+        assert db.get_thread("T9104")["status"] == "corrupt"
+        assert stats.threads_corrupt == 1
+
+
 def test_verify_catches_a_broken_link(cfg, paths):
     with Database(paths.db_path) as db:
         thread = seed_thread(db, cfg, "T9103")

@@ -257,11 +257,12 @@ protocol stayed bounded with every failed attempt excluded.
 python -m pytest tests -q
 ```
 
-29 offline tests cover the paths a happy-path dry run never reaches: transient
+30 offline tests cover the paths a happy-path dry run never reaches: transient
 and persistent receipt mismatch, timeout retry, declined consent, ambiguous gate
 → pause → adjudicate → resume, blind-turn exclusion proved against the raw
 record, swapped turns carrying the understudy's system prompt, fork lineage,
-mid-thread interruption and resume, and roster growth.
+mid-thread interruption and resume, a thread whose executor crashes outright,
+and roster growth.
 
 ## Run order
 
