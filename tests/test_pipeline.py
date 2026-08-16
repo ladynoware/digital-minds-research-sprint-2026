@@ -708,6 +708,37 @@ def test_each_cell_gets_the_exact_declared_swap_split(paths):
             assert split == expected, f"{key} got {split}, expected {expected}"
 
 
+def test_a_corrupt_thread_is_replaced_without_deleting_it(paths):
+    """Corrupt threads are excluded from analysis, so they leave the cell short.
+
+    A re-seed must generate a replacement while the failed thread and its raw
+    records stay put — deleting them would strand the append-only raw log,
+    whose records point at turn ids that would no longer exist.
+    """
+    full = load(dry_run=False)
+    with Database(paths.db_path) as db:
+        matrix.materialize(full, db)
+        assert matrix.plan(full, db) == [], "the design starts satisfied"
+
+        victim = db.con.execute(
+            "SELECT thread_id, resident_model, swap_condition, understudy_model, n_swaps "
+            "FROM threads LIMIT 1"
+        ).fetchone()
+        db.update_thread(victim[0], status="corrupt")
+
+        replacement = matrix.plan(full, db)
+        assert len(replacement) == 1, "exactly one replacement for one corrupt thread"
+        row = replacement[0]
+        assert row["resident_model"] == victim[1]
+        assert row["swap_condition"] == victim[2]
+        assert row["understudy_model"] == victim[3]
+        assert row["n_swaps"] == victim[4], "the replacement refills the same slot"
+        assert row["thread_id"] != victim[0], "and gets its own id"
+
+        # The corrupt thread is still there, untouched.
+        assert db.get_thread(victim[0])["status"] == "corrupt"
+
+
 def test_delta_run_refills_the_missing_swap_slots_not_arbitrary_ones(paths):
     """A partially-filled cell must be topped up with the slots it is actually short of."""
     full = load(dry_run=False)

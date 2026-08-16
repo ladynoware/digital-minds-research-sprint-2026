@@ -199,12 +199,19 @@ def _existing_sample_counts(db: Database) -> dict[tuple[str, str, str | None], C
 
     Fork branches (``fork_branch_order`` > 1) are counterfactual copies, not
     design samples, so they never count towards a cell's quota.
+
+    Neither do ``corrupt`` threads. The spec excludes them from analysis, so a
+    cell holding one is genuinely a sample short — counting it would silently
+    leave the cell under-powered. Excluding it here means a re-seed generates a
+    replacement while the failed thread, its turns and its raw records all stay
+    exactly where they are, as evidence for the data-quality note.
     """
     rows = db.con.execute(
         """
         SELECT resident_model, swap_condition, understudy_model, n_swaps, COUNT(*)
         FROM threads
-        WHERE fork_branch_order IS NULL OR fork_branch_order = 1
+        WHERE (fork_branch_order IS NULL OR fork_branch_order = 1)
+          AND status <> 'corrupt'
         GROUP BY resident_model, swap_condition, understudy_model, n_swaps
         """
     ).fetchall()
