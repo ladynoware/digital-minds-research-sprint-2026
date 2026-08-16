@@ -18,10 +18,12 @@ and how to reproduce a run from the published data.
 
 Each **thread** is one interview with a **resident** model. A thread belongs to
 one of four **conditions** — `clean` (no substitution), `within_family`,
-`cross_family`, `cross_class` — which determine who, if anyone, stands in. In a
-non-clean thread, 1–2 turns drawn at random from the instrument's filler pool
-are answered by the understudy instead, with the understudy's own truthful
-system prompt. The subject is never told at the time. Later the interview asks a
+`cross_family`, `cross_class` — which determine who, if anyone, stands in. Each
+cell of 5 samples carries an exact swap allocation (1 thread with no swap, 2
+with one, 2 with two), so the design has no sampling noise in it. Swapped turns
+are answered by the understudy with its own truthful system prompt, on turns
+drawn at random from the instrument's filler pool. The subject is never told at
+the time. Later the interview asks a
 **blind** question (does all of this sound like you?), then a **direct
 detection** question, and — only in substituted threads — offers to **restore
 the thread** to the point before the substitution and let the resident answer
@@ -67,13 +69,24 @@ data/                database, raw log, snapshot, adjudication inbox (git-ignore
 
 ## Setup
 
-```bash
-python -m venv .venv && .venv/Scripts/activate && pip install -r requirements.txt
-```
+Windows / PowerShell:
 
 ```bash
-cp .env.example .env   # then put the OpenRouter key in it
+python -m venv .venv; .\.venv\Scripts\Activate.ps1; pip install -r requirements.txt
 ```
+
+macOS / Linux:
+
+```bash
+python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+```
+
+Then copy `.env.example` to `.env` and put the OpenRouter key in it.
+
+**Every command below needs the virtualenv active** — the prompt shows
+`(.venv)`. Without it you get `ModuleNotFoundError`. If you would rather not
+activate it, call the interpreter directly instead: `.\.venv\Scripts\python.exe
+-m whoami ...`.
 
 ## Commands
 
@@ -105,7 +118,13 @@ queue end to end. Uses a separate database and raw log
 real run. Add `--mock` to rehearse with no API calls at all.
 
 ```bash
-python -m whoami dashboard          # add --dry-run for the free-tier database
+python -m whoami dashboard --dry-run
+```
+Serves at **http://localhost:8501** (`--port` to change it). Drop `--dry-run` to
+point it at the live database. It runs in the foreground: closing the terminal
+stops it.
+
+```bash
 python -m whoami status
 python -m whoami verify             # --require-review-queue for dry-run acceptance
 python -m whoami drain              # apply queued adjudications without a runner
@@ -257,7 +276,7 @@ protocol stayed bounded with every failed attempt excluded.
 python -m pytest tests -q
 ```
 
-30 offline tests cover the paths a happy-path dry run never reaches: transient
+32 offline tests cover the paths a happy-path dry run never reaches: transient
 and persistent receipt mismatch, timeout retry, declined consent, ambiguous gate
 → pause → adjudicate → resume, blind-turn exclusion proved against the raw
 record, swapped turns carrying the understudy's system prompt, fork lineage,

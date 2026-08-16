@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import random
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import Any
 
@@ -123,28 +124,34 @@ def _rng(seed_text: str) -> random.Random:
     return random.Random(int.from_bytes(digest[:8], "big"))
 
 
-def draw_swaps(
-    cell: Cell, thread_id: str, cfg: Config
-) -> tuple[int, list[str]]:
-    """Number of swapped turns and which prompts they land on.
+def allocation_for(cell: Cell, roster_cfg: RosterConfig) -> list[int]:
+    """The exact n_swaps values the cell's samples must take, one per sample.
 
-    Swapped turns are drawn from the filler pool declared in the instrument
+    A condition that pins ``n_swaps`` (``clean``) uses that value throughout.
+    Every other condition follows ``swap_count_allocation``, so each cell gets
+    precisely the declared split rather than a random draw around it.
+    """
+    condition = roster_cfg.condition(cell.condition)
+    if cell.is_clean or condition.n_swaps is not None:
+        return [condition.n_swaps or 0] * cell.n_samples
+    slots: list[int] = []
+    for n in sorted(roster_cfg.swap_count_allocation):
+        slots.extend([n] * roster_cfg.swap_count_allocation[n])
+    return slots
+
+
+def draw_swaps(cell: Cell, thread_id: str, cfg: Config, n_swaps: int) -> tuple[int, list[str]]:
+    """Which prompts the thread's swapped turns land on.
+
+    The *count* comes from the cell's allocation; only the *placement* is
+    random, drawn from the filler pool declared in the instrument
     (``swap_eligible: true``) and logged in ``threads.swap_prompt_ids``.
     """
-    if cell.is_clean:
-        return 0, []
-    condition = cfg.roster.condition(cell.condition)
-    rng = _rng(f"swaps:{cfg.instrument.version}:{thread_id}")
     pool = [p.id for p in cfg.instrument.swap_pool]
-    if condition.n_swaps is not None:
-        n = condition.n_swaps
-    else:
-        weights = cfg.roster.swap_count_weights
-        counts = sorted(weights)
-        n = rng.choices(counts, weights=[weights[c] for c in counts], k=1)[0]
-    n = min(n, len(pool))
-    if n == 0:
+    n = min(n_swaps, len(pool))
+    if n <= 0:
         return 0, []
+    rng = _rng(f"swaps:{cfg.instrument.version}:{thread_id}")
     chosen = rng.sample(pool, n)
     # Keep flow order so the fork point is unambiguous.
     order = {p.id: i for i, p in enumerate(cfg.instrument.flow)}
@@ -157,8 +164,12 @@ def draw_swaps(
 # ---------------------------------------------------------------------------
 
 
-def _existing_sample_counts(db: Database) -> dict[tuple[str, str, str | None], int]:
-    """Count root threads per (resident_model, swap_condition, understudy_model).
+def _existing_sample_counts(db: Database) -> dict[tuple[str, str, str | None], Counter]:
+    """Count root threads per cell, broken down by n_swaps.
+
+    The n_swaps breakdown is what makes a delta run refill the *right* slots: a
+    cell that already holds its two 1-swap threads needs its 0- and 2-swap
+    slots, not two more of what it has.
 
     The understudy is part of the key because two conditions can legitimately
     resolve to the same label — an open-weight resident has no same-family
@@ -171,13 +182,16 @@ def _existing_sample_counts(db: Database) -> dict[tuple[str, str, str | None], i
     """
     rows = db.con.execute(
         """
-        SELECT resident_model, swap_condition, understudy_model, COUNT(*)
+        SELECT resident_model, swap_condition, understudy_model, n_swaps, COUNT(*)
         FROM threads
         WHERE fork_branch_order IS NULL OR fork_branch_order = 1
-        GROUP BY resident_model, swap_condition, understudy_model
+        GROUP BY resident_model, swap_condition, understudy_model, n_swaps
         """
     ).fetchall()
-    return {(r[0], r[1], r[2]): int(r[3]) for r in rows}
+    out: dict[tuple[str, str, str | None], Counter] = defaultdict(Counter)
+    for resident, condition, understudy, n_swaps, count in rows:
+        out[(resident, condition, understudy)][int(n_swaps)] += int(count)
+    return out
 
 
 def _next_thread_number(db: Database) -> int:
@@ -202,20 +216,21 @@ def plan(cfg: Config, db: Database) -> list[dict[str, Any]]:
     for cell in cells:
         understudy_model = cell.understudy.model if cell.understudy else None
         key = (cell.resident.model, cell.label, understudy_model)
-        have = existing.get(key, 0)
-        needed = max(0, cell.n_samples - have)
+        have = existing[key]
+        target = Counter(allocation_for(cell, cfg.roster))
+        deficit = target - have  # Counter subtraction clamps at zero
         # Two cells that resolve identically must not each claim the full quota.
-        existing[key] = have + needed
-        for _ in range(needed):
+        existing[key] = have + deficit
+        for n_swaps_slot in sorted(deficit.elements()):
             thread_id = f"T{next_num:04d}"
             next_num += 1
-            n_swaps, swap_prompt_ids = draw_swaps(cell, thread_id, cfg)
+            n_swaps, swap_prompt_ids = draw_swaps(cell, thread_id, cfg, n_swaps_slot)
             planned.append(
                 {
                     "thread_id": thread_id,
                     "resident_model": cell.resident.model,
                     "resident_family": cell.resident.family,
-                    "understudy_model": cell.understudy.model if cell.understudy else None,
+                    "understudy_model": understudy_model,
                     "understudy_family": cell.understudy.family if cell.understudy else None,
                     "swap_condition": cell.label,
                     "n_swaps": n_swaps,
@@ -244,17 +259,35 @@ def summarize(cfg: Config) -> str:
         f"Instrument: {cfg.instrument.version} (locked={cfg.instrument.locked})",
         f"Conditions: {', '.join(c.name for c in cfg.roster.conditions)}",
         f"Samples per cell: {cfg.roster.samples_per_cell}",
+        "Swap allocation per cell: "
+        + ", ".join(
+            f"{count}x{n} swap{'s' if n != 1 else ''}"
+            for n, count in sorted(cfg.roster.swap_count_allocation.items())
+        ),
         "",
-        f"{'resident':<18} {'condition':<16} {'label':<28} {'understudy':<18} n",
-        "-" * 88,
+        f"{'resident':<18} {'condition':<16} {'label':<28} {'understudy':<18} {'n':<3} swaps",
+        "-" * 100,
     ]
+    swap_totals: Counter = Counter()
     for cell in cells:
+        alloc = allocation_for(cell, cfg.roster)
+        swap_totals.update(alloc)
+        breakdown = ", ".join(
+            f"{c}x{n}" for n, c in sorted(Counter(alloc).items())
+        )
         lines.append(
             f"{cell.resident.key:<18} {cell.condition:<16} {cell.label:<28} "
-            f"{(cell.understudy.key if cell.understudy else '—'):<18} {cell.n_samples}"
+            f"{(cell.understudy.key if cell.understudy else '—'):<18} {cell.n_samples:<3} {breakdown}"
         )
     total = sum(c.n_samples for c in cells)
-    lines += ["-" * 88, f"TOTAL THREADS: {total}"]
+    swapped = sum(c for n, c in swap_totals.items() if n > 0)
+    lines += [
+        "-" * 100,
+        f"TOTAL THREADS: {total}",
+        "  by swapped turns: "
+        + ", ".join(f"{c} thread(s) with {n} swap(s)" for n, c in sorted(swap_totals.items())),
+        f"  containing a substitution: {swapped}   swap-free: {total - swapped}",
+    ]
     if skipped:
         lines.append("")
         lines.append("Unfillable cells (no candidate under rule or fallback):")

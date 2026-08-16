@@ -122,8 +122,18 @@ def cmd_dashboard(args) -> int:
     app = REPO_ROOT / "dashboard" / "app.py"
     env = dict(os.environ)
     env["WHOAMI_DRY_RUN"] = "1" if args.dry_run else "0"
+    port = str(args.port)
+    print()
+    print(f"  Dashboard:  http://localhost:{port}")
+    print(f"  Profile:    {'dry run (free tier)' if args.dry_run else 'live'}")
+    print("  Leave this window open — closing it stops the dashboard. Ctrl+C to quit.")
+    print()
     return subprocess.call(
-        [sys.executable, "-m", "streamlit", "run", str(app), "--server.headless", "true"],
+        [
+            sys.executable, "-m", "streamlit", "run", str(app),
+            "--server.headless", "true",
+            "--server.port", port,
+        ],
         env=env,
     )
 
@@ -292,7 +302,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="fail unless an ambiguous gate has been routed to review (dry-run acceptance)",
     )
     v.set_defaults(func=cmd_verify)
-    common(sub.add_parser("dashboard", help="launch Streamlit")).set_defaults(func=cmd_dashboard)
+    dash = common(sub.add_parser("dashboard", help="launch Streamlit"))
+    dash.add_argument("--port", type=int, default=8501, help="port to serve on (default 8501)")
+    dash.set_defaults(func=cmd_dashboard)
     common(sub.add_parser("drain", help="apply queued adjudications")).set_defaults(func=cmd_drain)
 
     r = common(sub.add_parser("run", help="execute pending threads"), run_flags=True)
@@ -312,7 +324,7 @@ def main(argv: list[str] | None = None) -> int:
     for attr, default in (("dry_run", False), ("mock", False), ("limit", None),
                           ("max_cost", None), ("watch", False), ("note", None),
                           ("seed", False), ("plan", False),
-                          ("require_review_queue", False)):
+                          ("require_review_queue", False), ("port", 8501)):
         if not hasattr(args, attr):
             setattr(args, attr, default)
     return args.func(args)

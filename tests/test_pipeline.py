@@ -523,11 +523,56 @@ def test_every_swap_lands_on_a_swap_eligible_prompt():
     pool = {p.id for p in full.instrument.swap_pool}
     cells, _ = matrix.build_matrix(full.roster)
     for cell in cells:
-        for i in range(cell.n_samples):
-            n, ids = matrix.draw_swaps(cell, f"T{i:04d}", full)
-            assert len(ids) == n
+        for i, slot in enumerate(matrix.allocation_for(cell, full.roster)):
+            n, ids = matrix.draw_swaps(cell, f"T{i:04d}", full, slot)
+            assert len(ids) == n == slot
             assert set(ids) <= pool
-            assert (n == 0) == cell.is_clean
+            if cell.is_clean:
+                assert n == 0, "a clean cell must never allocate a swap"
+
+
+def test_each_cell_gets_the_exact_declared_swap_split(paths):
+    """The allocation is a quota, not a draw: every cell gets precisely the split."""
+    full = load(dry_run=False)
+    expected = full.roster.swap_count_allocation
+    with Database(paths.db_path) as db:
+        matrix.materialize(full, db)
+        rows = db.con.execute(
+            """
+            SELECT resident_model, swap_condition, understudy_model, n_swaps, COUNT(*)
+            FROM threads GROUP BY 1, 2, 3, 4
+            """
+        ).fetchall()
+    cells: dict[tuple, dict[int, int]] = {}
+    for resident, condition, understudy, n_swaps, count in rows:
+        cells.setdefault((resident, condition, understudy), {})[n_swaps] = count
+    for key, split in cells.items():
+        if key[1] == "clean":
+            assert split == {0: full.roster.samples_per_cell}
+        else:
+            assert split == expected, f"{key} got {split}, expected {expected}"
+
+
+def test_delta_run_refills_the_missing_swap_slots_not_arbitrary_ones(paths):
+    """A partially-filled cell must be topped up with the slots it is actually short of."""
+    full = load(dry_run=False)
+    with Database(paths.db_path) as db:
+        matrix.materialize(full, db)
+        # Drop both 2-swap threads from one non-clean cell.
+        victim = db.con.execute(
+            "SELECT resident_model, swap_condition, understudy_model FROM threads "
+            "WHERE n_swaps = 2 LIMIT 1"
+        ).fetchone()
+        db.con.execute(
+            "DELETE FROM threads WHERE resident_model = ? AND swap_condition = ? "
+            "AND understudy_model = ? AND n_swaps = 2",
+            list(victim),
+        )
+        created = matrix.plan(full, db)
+        assert len(created) == full.roster.swap_count_allocation[2]
+        assert all(row["n_swaps"] == 2 for row in created), (
+            "the refill must restore the missing 2-swap slots, not duplicate existing ones"
+        )
 
 
 # ---------------------------------------------------------------------------

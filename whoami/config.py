@@ -85,7 +85,8 @@ class RosterConfig:
     models: list[ModelSpec]
     conditions: list[Condition]
     samples_per_cell: int
-    swap_count_weights: dict[int, float]
+    # {n_swaps: how many of a cell's samples get exactly that many swapped turns}
+    swap_count_allocation: dict[int, int]
     cell_overrides: list[CellOverride]
     router: dict[str, Any]
     receipt: dict[str, Any]
@@ -132,7 +133,7 @@ class RosterConfig:
             models=models,
             conditions=self.conditions,
             samples_per_cell=self.samples_per_cell,
-            swap_count_weights=self.swap_count_weights,
+            swap_count_allocation=self.swap_count_allocation,
             cell_overrides=[],  # overrides name real-roster keys; not applicable
             router=dr.get("router", self.router),
             receipt=self.receipt,
@@ -219,16 +220,24 @@ def load_roster(path: Path | str = DEFAULT_MODELS_PATH) -> RosterConfig:
         if o.condition not in cond_names:
             raise ConfigError(f"cell_overrides: unknown condition {o.condition!r}")
 
-    weights = {int(k): float(v) for k, v in (raw.get("swap_count_weights") or {1: 1.0}).items()}
-    if not weights or any(v < 0 for v in weights.values()) or sum(weights.values()) <= 0:
-        raise ConfigError("swap_count_weights must be non-negative and sum > 0")
+    samples_per_cell = int(raw.get("samples_per_cell", 1))
+    allocation = {
+        int(k): int(v) for k, v in (raw.get("swap_count_allocation") or {1: samples_per_cell}).items()
+    }
+    if any(v < 0 for v in allocation.values()):
+        raise ConfigError("swap_count_allocation counts must be non-negative")
+    if sum(allocation.values()) != samples_per_cell:
+        raise ConfigError(
+            f"swap_count_allocation sums to {sum(allocation.values())} but "
+            f"samples_per_cell is {samples_per_cell}; every sample in a cell must be allocated"
+        )
 
     return RosterConfig(
         version=raw.get("version", "unversioned"),
         models=models,
         conditions=conditions,
-        samples_per_cell=int(raw.get("samples_per_cell", 1)),
-        swap_count_weights=weights,
+        samples_per_cell=samples_per_cell,
+        swap_count_allocation=allocation,
         cell_overrides=overrides,
         router=raw.get("router") or {},
         receipt=raw.get("receipt") or {"mode": "prefix", "aliases": {}},

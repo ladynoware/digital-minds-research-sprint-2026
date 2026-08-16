@@ -113,13 +113,21 @@ conditions:
 
 samples_per_cell: 5
 
-# How many turns are swapped in a non-clean thread. Weights are relative;
-# drawn per thread from the seeded RNG.
-#   ASSUMPTION (flagged to Jana in the Build Log): the spec fixes n_swaps to
-#   0-2 "per design ratios" but does not state the ratios. 50/50 until told.
-swap_count_weights:
-  1: 0.5
-  2: 0.5
+# How the samples in a cell are split by number of swapped turns.
+# {n_swaps: how many of the cell's threads get exactly that many}.
+# This is an exact allocation, not a weighted draw: every cell gets precisely
+# this split, so the design carries no sampling noise. Must sum to
+# samples_per_cell.
+#
+# Set by Jana 2026-08-16: of the 5 samples per configuration, 1 without any
+# swap, 2 with one swap, 2 with two swaps.
+#
+# Conditions that pin `n_swaps` (i.e. `clean`) ignore this and use their pinned
+# value for all samples.
+swap_count_allocation:
+  0: 1
+  1: 2
+  2: 2
 
 # -----------------------------------------------------------------------------
 # Cell overrides — pin an exact understudy for a (resident, condition) cell.
