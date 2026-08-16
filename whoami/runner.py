@@ -67,6 +67,7 @@ class RunStats:
     threads_completed: int = 0
     threads_corrupt: int = 0
     threads_paused: int = 0
+    threads_halted: int = 0
     threads_no_consent: int = 0
     calls: int = 0
     cost_usd: float = 0.0
@@ -270,8 +271,11 @@ class Runner:
         max_attempts = int(self.cfg.roster.api.get("max_attempts", 3))
 
         while True:
+            # Both of these stop the run rather than the thread. RunHalted leaves
+            # the thread `pending`; ThreadPaused would leave it `running`, which
+            # reads as "in flight" long after the runner has exited.
             if self._cost_exceeded.is_set():
-                raise ThreadPaused("cost cap reached")
+                raise RunHalted("cost cap reached")
             if self._halted.is_set():
                 raise RunHalted("another worker hit a rate limit")
 
@@ -429,10 +433,10 @@ class Runner:
                     await self._maybe_fork(thread_id)
 
             except RunHalted as exc:
-                # Left exactly as it was: pending, fully resumable tomorrow.
+                # Left exactly as it was: pending, fully resumable later.
                 await self._db(self.db.update_thread, thread_id, status="pending")
-                self.stats.errors.append(f"{thread_id}: halted: {exc}")
-                self.log(f"  {thread_id} HALTED (rate limit) — resumable: {exc}")
+                self.stats.threads_halted += 1
+                self.log(f"  {thread_id} HALTED — resumable: {exc}")
             except ThreadPaused as exc:
                 self.stats.threads_paused += 1
                 self.log(f"  {thread_id} paused for review at {exc}")

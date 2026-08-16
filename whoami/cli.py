@@ -363,6 +363,7 @@ async def _run(args, cfg: Config, paths: RunPaths, probes: dict[str, set[str]] |
     print("--- run summary ---")
     print(f"threads done:          {stats.threads_completed}")
     print(f"threads paused:        {stats.threads_paused}")
+    print(f"threads halted:        {stats.threads_halted}   (left pending, resumable)")
     print(f"threads no-consent:    {stats.threads_no_consent}")
     print(f"threads corrupt:       {stats.threads_corrupt}")
     print(f"API calls:             {stats.calls}")
