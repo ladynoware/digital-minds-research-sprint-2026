@@ -73,9 +73,13 @@
   --msg-clamp: 15em;
 
   /* -- type --------------------------------------------------------------- */
+  /* Inter first, then the system stack. Note: this uses a *locally installed*
+     Inter — there is no webfont file in the repo, so it renders as Inter on
+     machines that have it and falls back to the system sans everywhere else.
+     See the note in README.md about self-hosting it for public visitors. */
+  --font-body: Inter, "Inter var", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
   --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
-  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   --t-hero: clamp(2rem, 1.3rem + 2.6vw, 3.1rem);
@@ -85,12 +89,17 @@
   --t-body: 1rem;
   --t-small: 0.875rem;
   --t-tiny: 0.78rem;
+  /* message bubbles read as quoted material, a step down from body copy */
+  --t-message: 0.925rem;
 
   --lh-tight: 1.2;
   --lh-body: 1.62;
 
   --w-normal: 400;
   --w-medium: 550;
+  /* `strong`/`b` render at this weight rather than the browser default 700 —
+     600 is Inter's semibold, which holds up better in running text. */
+  --w-strong: 600;
   --w-bold: 700;
 
   /* -- space & shape ------------------------------------------------------ */

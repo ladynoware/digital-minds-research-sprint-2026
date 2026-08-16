@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T17:53:25+00:00",
+  "generated_at": "2026-08-16T18:31:22+00:00",
   "mode": "real",
   "mock": false,
   "notice": "",
@@ -138,15 +138,15 @@
     }
   ],
   "threads": {
-    "total": 170,
+    "total": 173,
     "by_status": {
-      "pending": 29,
-      "running": 10,
+      "done": 158,
       "corrupt": 1,
-      "done": 130
+      "running": 10,
+      "pending": 4
     },
-    "in_flight": 39,
-    "settled": 131,
+    "in_flight": 14,
+    "settled": 159,
     "complete": false
   }
 }

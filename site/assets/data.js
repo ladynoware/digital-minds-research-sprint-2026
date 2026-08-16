@@ -128,6 +128,21 @@ const WhoAmI = (() => {
   async function mountFooter() {
     const foot = document.getElementById("foot-stamp");
     if (!foot) return;
+
+    // One link that hands a reader — or an agent — the whole dataset. Added
+    // from here so every page carries it without repeating the markup.
+    if (!foot.parentElement.querySelector(".data-link")) {
+      foot.parentElement.append(
+        el(
+          "p",
+          { class: "data-link" },
+          "Every number on this site comes from four JSON files: ",
+          el("a", { href: "data/index.json", text: "machine-readable data" }),
+          "."
+        )
+      );
+    }
+
     try {
       foot.textContent = stamp(await load("meta"));
     } catch {

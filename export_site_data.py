@@ -833,6 +833,74 @@ def build_messages(data: Dataset, questions: dict[str, Any], mode: str) -> dict[
     }
 
 
+DATA_FILES = [
+    ("meta.json", "Roster, families, swap conditions, thread counts, and how far the run has got."),
+    (
+        "results_manifest.json",
+        "Every numeric result: total and per-model rates with the counts behind them, "
+        "plus breakdowns by swap condition and model family. Entries with "
+        "status='pending' are awaiting the qualitative coding pass.",
+    ),
+    (
+        "messages.json",
+        "Every reply to survey question 2 — the subjects' direct messages to the "
+        "digital minds research community — with model, family and thread id.",
+    ),
+    ("qualitative.json", "The qualitative coding topics and their status."),
+]
+
+
+def build_index(data: Dataset, roster: Roster, questions: dict[str, Any], mode: str) -> dict[str, Any]:
+    """A catalog at data/index.json, so one link hands an agent the whole dataset.
+
+    Everything the site draws comes from these four files and nothing else, so
+    this is not a summary of the data — it is the data, with a description of
+    each file attached.
+    """
+    prog = progress(data)
+    return {
+        "name": "Who Am I? — Locating the self in LLMs",
+        "description": (
+            "An automated survey of how large language models locate their own identity, "
+            "in which 0-2 turns of each interview were served by a different model and "
+            "subjects were later asked to identify them."
+        ),
+        "generated_at": utcnow_iso(),
+        "mode": mode,
+        "mock": mode == "mock",
+        "roster_version": roster.version,
+        "instrument_version": questions["version"],
+        "run": {
+            "threads": len(data.threads),
+            "settled": prog["settled"],
+            "in_flight": prog["in_flight"],
+            "complete": prog["complete"],
+        },
+        "caveat": (
+            MOCK_NOTICE
+            if mode == "mock"
+            else (
+                "Exported while the run was still going — rates will move."
+                if not prog["complete"]
+                else ""
+            )
+        ),
+        # Relative to this file, which sits beside them — so the links resolve
+        # whether the site is served from a domain root or a project subpath,
+        # and an agent that fetched data/index.json can follow them directly.
+        "files": [
+            {"path": name, "url": f"./{name}", "description": desc}
+            for name, desc in DATA_FILES
+        ],
+        "source": {
+            "repository": "https://github.com/ladynoware/digital-minds-research-sprint-2026",
+            "export_script": "export_site_data.py",
+            "instrument": "config/questions.yaml",
+            "roster": "config/models.yaml",
+        },
+    }
+
+
 def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -872,6 +940,7 @@ def main(argv: list[str] | None = None) -> int:
     write_json(args.out / "results_manifest.json", build_manifest(data, roster, mode))
     write_json(args.out / "messages.json", build_messages(data, questions, mode))
     write_json(args.out / "qualitative.json", build_qualitative(mode))
+    write_json(args.out / "index.json", build_index(data, roster, questions, mode))
 
     ready = sum(1 for s in RESULTS if s.status == "ready")
     print(

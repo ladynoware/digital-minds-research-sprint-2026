@@ -102,9 +102,30 @@ bars, which take their fill from the family palette (`--fam-claude`, `--fam-gpt`
 The charts are plain SVG built in [`assets/chart.js`](assets/chart.js). That file
 decides geometry only; it sets no fill, stroke or font.
 
+### A caveat about Inter
+
+`--font-body` asks for Inter first. There is **no webfont file in the repo**, so
+this resolves to a *locally installed* Inter. It renders as Inter on machines
+that have it — including this one — and falls back to the system sans-serif
+everywhere else, which is most visitors.
+
+To make the published site actually show Inter, the font has to be self-hosted:
+drop `Inter-Regular/-Medium/-SemiBold.woff2` into `assets/fonts/` and add the
+matching `@font-face` rules at the top of `theme.css`. That is a deliberate
+choice, not an oversight — it adds ~100 KB and a licence file to a repo that
+currently has zero binary assets, so it is worth making on purpose.
+
+`strong` and `b` render at `--w-strong` (600, Inter's semibold) rather than the
+browser default of 700.
+
 ## The pages
 
 Menu order is Home · Numerical Results · Qualitative Results · Messages.
+
+`data/index.json` is a catalog of the four data files, linked from the footer of
+every page. It is the one link to hand anyone — or any agent — who wants the
+data rather than the pages; the file URLs in it are relative to itself, so they
+resolve under a domain root or a project subpath alike.
 
 | File | What it is |
 | --- | --- |

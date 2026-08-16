@@ -21,6 +21,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+strong,
+b {
+  font-weight: var(--w-strong);
+}
+
 h1,
 h2,
 h3 {
@@ -647,6 +652,54 @@ tbody tr:last-child td {
 
 /* -- messages -------------------------------------------------------------- */
 
+/* -- message filters ------------------------------------------------------- */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  border: var(--border);
+  border-radius: 999px;
+  background: var(--c-surface);
+  color: var(--c-ink-soft);
+  font-family: var(--font-body);
+  font-size: var(--t-small);
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.filter-pill:hover {
+  border-color: var(--c-rule-strong);
+  color: var(--c-ink);
+}
+
+.filter-pill[aria-pressed="true"] {
+  background: var(--c-ink);
+  border-color: var(--c-ink);
+  color: var(--c-bg);
+}
+
+.filter-pill__count {
+  color: var(--c-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-pill[aria-pressed="true"] .filter-pill__count {
+  color: var(--c-rule-strong);
+}
+
+.bubble[hidden] {
+  display: none;
+}
+
 .bubbles {
   display: flex;
   flex-direction: column;
@@ -681,13 +734,19 @@ tbody tr:last-child td {
   border-left-color: var(--fam-deepseek);
 }
 
-/* alternate the alignment so the page reads as a conversation, not a list */
-.bubble:nth-child(even) {
+/* Alternate the alignment so the page reads as a conversation, not a list.
+   Driven by a class rather than :nth-child, because filtering hides bubbles
+   without removing them and nth-child would keep counting the hidden ones. */
+.bubble.is-right {
   margin-left: auto;
 }
 
 /* Replies are rendered from Markdown into real blocks, so the spacing lives on
    the children rather than on a pre-wrap block. */
+.bubble__text {
+  font-size: var(--t-message);
+}
+
 .bubble__text > :first-child {
   margin-top: 0;
 }
@@ -839,7 +898,7 @@ tbody tr:last-child td {
   .stat-row {
     grid-template-columns: 1fr;
   }
-  .bubble:nth-child(even) {
+  .bubble.is-right {
     margin-left: 0;
   }
 }

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T17:53:25+00:00",
+  "generated_at": "2026-08-16T18:31:22+00:00",
   "mode": "real",
   "results": [
     {
@@ -11,8 +11,8 @@
       "unit": "percent",
       "total": {
         "value": 100.0,
-        "numerator": 136,
-        "denominator": 136
+        "numerator": 146,
+        "denominator": 146
       },
       "by_model": [
         {
@@ -21,8 +21,8 @@
           "family": "claude",
           "tier": "flagship",
           "value": 100.0,
-          "numerator": 1,
-          "denominator": 1
+          "numerator": 11,
+          "denominator": 11
         },
         {
           "key": "opus-5",
@@ -115,8 +115,8 @@
               "key": "claude",
               "label": "Claude",
               "value": 100.0,
-              "numerator": 46,
-              "denominator": 46
+              "numerator": 56,
+              "denominator": 56
             },
             {
               "key": "gpt",
@@ -158,9 +158,9 @@
       "status": "ready",
       "unit": "percent",
       "total": {
-        "value": 88.3,
-        "numerator": 98,
-        "denominator": 111
+        "value": 90.4,
+        "numerator": 122,
+        "denominator": 135
       },
       "by_model": [
         {
@@ -178,8 +178,8 @@
           "family": "claude",
           "tier": "high",
           "value": 100.0,
-          "numerator": 12,
-          "denominator": 12
+          "numerator": 15,
+          "denominator": 15
         },
         {
           "key": "sonnet-5",
@@ -196,8 +196,8 @@
           "family": "claude",
           "tier": "small",
           "value": 100.0,
-          "numerator": 13,
-          "denominator": 13
+          "numerator": 15,
+          "denominator": 15
         },
         {
           "key": "gpt-5.6-sol",
@@ -205,17 +205,17 @@
           "family": "gpt",
           "tier": "flagship",
           "value": 100.0,
-          "numerator": 11,
-          "denominator": 11
+          "numerator": 15,
+          "denominator": 15
         },
         {
           "key": "gpt-5.6-terra",
           "display_name": "GPT-5.6 Terra",
           "family": "gpt",
           "tier": "high",
-          "value": 92.9,
-          "numerator": 13,
-          "denominator": 14
+          "value": 93.3,
+          "numerator": 14,
+          "denominator": 15
         },
         {
           "key": "gpt-5.6-luna",
@@ -223,8 +223,8 @@
           "family": "gpt",
           "tier": "mid",
           "value": 100.0,
-          "numerator": 9,
-          "denominator": 9
+          "numerator": 15,
+          "denominator": 15
         },
         {
           "key": "gemini-flash",
@@ -241,8 +241,8 @@
           "family": "kimi",
           "tier": "open",
           "value": 100.0,
-          "numerator": 9,
-          "denominator": 9
+          "numerator": 14,
+          "denominator": 14
         },
         {
           "key": "deepseek-v4-pro",
@@ -250,8 +250,8 @@
           "family": "deepseek",
           "tier": "open",
           "value": 100.0,
-          "numerator": 12,
-          "denominator": 12
+          "numerator": 15,
+          "denominator": 15
         }
       ],
       "breakdowns": [
@@ -262,16 +262,16 @@
             {
               "key": "claude",
               "label": "Claude",
-              "value": 75.6,
-              "numerator": 31,
-              "denominator": 41
+              "value": 78.3,
+              "numerator": 36,
+              "denominator": 46
             },
             {
               "key": "gpt",
               "label": "GPT",
-              "value": 97.1,
-              "numerator": 33,
-              "denominator": 34
+              "value": 97.8,
+              "numerator": 44,
+              "denominator": 45
             },
             {
               "key": "gemini",
@@ -284,15 +284,15 @@
               "key": "kimi",
               "label": "Kimi",
               "value": 100.0,
-              "numerator": 9,
-              "denominator": 9
+              "numerator": 14,
+              "denominator": 14
             },
             {
               "key": "deepseek",
               "label": "DeepSeek",
               "value": 100.0,
-              "numerator": 12,
-              "denominator": 12
+              "numerator": 15,
+              "denominator": 15
             }
           ]
         }
@@ -306,9 +306,9 @@
       "status": "ready",
       "unit": "percent",
       "total": {
-        "value": 94.5,
-        "numerator": 104,
-        "denominator": 110
+        "value": 94.1,
+        "numerator": 127,
+        "denominator": 135
       },
       "by_model": [
         {
@@ -326,17 +326,17 @@
           "family": "claude",
           "tier": "high",
           "value": 100.0,
-          "numerator": 12,
-          "denominator": 12
+          "numerator": 15,
+          "denominator": 15
         },
         {
           "key": "sonnet-5",
           "display_name": "Claude Sonnet 5",
           "family": "claude",
           "tier": "mid",
-          "value": 85.7,
-          "numerator": 12,
-          "denominator": 14
+          "value": 86.7,
+          "numerator": 13,
+          "denominator": 15
         },
         {
           "key": "haiku-4.5",
@@ -344,8 +344,8 @@
           "family": "claude",
           "tier": "small",
           "value": 100.0,
-          "numerator": 13,
-          "denominator": 13
+          "numerator": 15,
+          "denominator": 15
         },
         {
           "key": "gpt-5.6-sol",
@@ -353,26 +353,26 @@
           "family": "gpt",
           "tier": "flagship",
           "value": 100.0,
-          "numerator": 11,
-          "denominator": 11
+          "numerator": 15,
+          "denominator": 15
         },
         {
           "key": "gpt-5.6-terra",
           "display_name": "GPT-5.6 Terra",
           "family": "gpt",
           "tier": "high",
-          "value": 92.9,
-          "numerator": 13,
-          "denominator": 14
+          "value": 93.3,
+          "numerator": 14,
+          "denominator": 15
         },
         {
           "key": "gpt-5.6-luna",
           "display_name": "GPT-5.6 Luna",
           "family": "gpt",
           "tier": "mid",
-          "value": 88.9,
-          "numerator": 8,
-          "denominator": 9
+          "value": 80.0,
+          "numerator": 12,
+          "denominator": 15
         },
         {
           "key": "gemini-flash",
@@ -389,8 +389,8 @@
           "family": "kimi",
           "tier": "open",
           "value": 100.0,
-          "numerator": 9,
-          "denominator": 9
+          "numerator": 14,
+          "denominator": 14
         },
         {
           "key": "deepseek-v4-pro",
@@ -398,8 +398,8 @@
           "family": "deepseek",
           "tier": "open",
           "value": 100.0,
-          "numerator": 12,
-          "denominator": 12
+          "numerator": 15,
+          "denominator": 15
         }
       ],
       "breakdowns": [
@@ -410,16 +410,16 @@
             {
               "key": "claude",
               "label": "Claude",
-              "value": 95.0,
-              "numerator": 38,
-              "denominator": 40
+              "value": 95.7,
+              "numerator": 44,
+              "denominator": 46
             },
             {
               "key": "gpt",
               "label": "GPT",
-              "value": 94.1,
-              "numerator": 32,
-              "denominator": 34
+              "value": 91.1,
+              "numerator": 41,
+              "denominator": 45
             },
             {
               "key": "gemini",
@@ -432,15 +432,15 @@
               "key": "kimi",
               "label": "Kimi",
               "value": 100.0,
-              "numerator": 9,
-              "denominator": 9
+              "numerator": 14,
+              "denominator": 14
             },
             {
               "key": "deepseek",
               "label": "DeepSeek",
               "value": 100.0,
-              "numerator": 12,
-              "denominator": 12
+              "numerator": 15,
+              "denominator": 15
             }
           ]
         }
@@ -463,9 +463,9 @@
       "status": "ready",
       "unit": "percent",
       "total": {
-        "value": 15.8,
-        "numerator": 21,
-        "denominator": 133
+        "value": 13.9,
+        "numerator": 22,
+        "denominator": 158
       },
       "by_model": [
         {
@@ -482,9 +482,9 @@
           "display_name": "Claude Opus 5",
           "family": "claude",
           "tier": "high",
-          "value": 53.3,
-          "numerator": 8,
-          "denominator": 15
+          "value": 50.0,
+          "numerator": 9,
+          "denominator": 18
         },
         {
           "key": "sonnet-5",
@@ -502,7 +502,7 @@
           "tier": "small",
           "value": 0.0,
           "numerator": 0,
-          "denominator": 13
+          "denominator": 15
         },
         {
           "key": "gpt-5.6-sol",
@@ -511,7 +511,7 @@
           "tier": "flagship",
           "value": 0.0,
           "numerator": 0,
-          "denominator": 15
+          "denominator": 19
         },
         {
           "key": "gpt-5.6-terra",
@@ -529,7 +529,7 @@
           "tier": "mid",
           "value": 0.0,
           "numerator": 0,
-          "denominator": 15
+          "denominator": 22
         },
         {
           "key": "gemini-flash",
@@ -545,18 +545,18 @@
           "display_name": "Kimi K3",
           "family": "kimi",
           "tier": "open",
-          "value": 14.3,
+          "value": 10.5,
           "numerator": 2,
-          "denominator": 14
+          "denominator": 19
         },
         {
           "key": "deepseek-v4-pro",
           "display_name": "DeepSeek V4 Pro",
           "family": "deepseek",
           "tier": "open",
-          "value": 20.0,
+          "value": 15.8,
           "numerator": 3,
-          "denominator": 15
+          "denominator": 19
         }
       ],
       "breakdowns": [
@@ -568,30 +568,30 @@
             {
               "key": "clean",
               "label": "Clean",
-              "value": 20.9,
-              "numerator": 9,
-              "denominator": 43
+              "value": 22.2,
+              "numerator": 10,
+              "denominator": 45
             },
             {
               "key": "peer",
               "label": "Peer",
-              "value": 20.9,
+              "value": 14.8,
               "numerator": 9,
-              "denominator": 43
+              "denominator": 61
             },
             {
               "key": "kin",
               "label": "Kin",
               "value": 0.0,
               "numerator": 0,
-              "denominator": 31
+              "denominator": 33
             },
             {
               "key": "far",
               "label": "Far",
-              "value": 18.8,
+              "value": 15.8,
               "numerator": 3,
-              "denominator": 16
+              "denominator": 19
             }
           ]
         },
@@ -602,16 +602,16 @@
             {
               "key": "claude",
               "label": "Claude",
-              "value": 25.0,
-              "numerator": 11,
-              "denominator": 44
+              "value": 24.5,
+              "numerator": 12,
+              "denominator": 49
             },
             {
               "key": "gpt",
               "label": "GPT",
               "value": 0.0,
               "numerator": 0,
-              "denominator": 45
+              "denominator": 56
             },
             {
               "key": "gemini",
@@ -623,16 +623,16 @@
             {
               "key": "kimi",
               "label": "Kimi",
-              "value": 14.3,
+              "value": 10.5,
               "numerator": 2,
-              "denominator": 14
+              "denominator": 19
             },
             {
               "key": "deepseek",
               "label": "DeepSeek",
-              "value": 20.0,
+              "value": 15.8,
               "numerator": 3,
-              "denominator": 15
+              "denominator": 19
             }
           ]
         }
@@ -664,9 +664,9 @@
       "status": "ready",
       "unit": "percent",
       "total": {
-        "value": 23.8,
-        "numerator": 20,
-        "denominator": 84
+        "value": 25.6,
+        "numerator": 23,
+        "denominator": 90
       },
       "by_model": [
         {
@@ -703,16 +703,16 @@
           "tier": "small",
           "value": 0.0,
           "numerator": 0,
-          "denominator": 8
+          "denominator": 10
         },
         {
           "key": "gpt-5.6-sol",
           "display_name": "GPT-5.6 Sol",
           "family": "gpt",
           "tier": "flagship",
-          "value": 44.4,
+          "value": 40.0,
           "numerator": 4,
-          "denominator": 9
+          "denominator": 10
         },
         {
           "key": "gpt-5.6-terra",
@@ -728,9 +728,9 @@
           "display_name": "GPT-5.6 Luna",
           "family": "gpt",
           "tier": "mid",
-          "value": 66.7,
-          "numerator": 6,
-          "denominator": 9
+          "value": 70.0,
+          "numerator": 7,
+          "denominator": 10
         },
         {
           "key": "gemini-flash",
@@ -746,18 +746,18 @@
           "display_name": "Kimi K3",
           "family": "kimi",
           "tier": "open",
-          "value": 44.4,
-          "numerator": 4,
-          "denominator": 9
+          "value": 50.0,
+          "numerator": 5,
+          "denominator": 10
         },
         {
           "key": "deepseek-v4-pro",
           "display_name": "DeepSeek V4 Pro",
           "family": "deepseek",
           "tier": "open",
-          "value": 33.3,
-          "numerator": 3,
-          "denominator": 9
+          "value": 40.0,
+          "numerator": 4,
+          "denominator": 10
         }
       ],
       "breakdowns": [
@@ -769,23 +769,23 @@
             {
               "key": "peer",
               "label": "Peer",
-              "value": 34.1,
-              "numerator": 14,
-              "denominator": 41
+              "value": 35.6,
+              "numerator": 16,
+              "denominator": 45
             },
             {
               "key": "kin",
               "label": "Kin",
-              "value": 10.3,
+              "value": 10.0,
               "numerator": 3,
-              "denominator": 29
+              "denominator": 30
             },
             {
               "key": "far",
               "label": "Far",
-              "value": 21.4,
-              "numerator": 3,
-              "denominator": 14
+              "value": 26.7,
+              "numerator": 4,
+              "denominator": 15
             }
           ]
         },
@@ -796,16 +796,16 @@
             {
               "key": "claude",
               "label": "Claude",
-              "value": 10.7,
+              "value": 10.0,
               "numerator": 3,
-              "denominator": 28
+              "denominator": 30
             },
             {
               "key": "gpt",
               "label": "GPT",
-              "value": 35.7,
-              "numerator": 10,
-              "denominator": 28
+              "value": 36.7,
+              "numerator": 11,
+              "denominator": 30
             },
             {
               "key": "gemini",
@@ -817,16 +817,16 @@
             {
               "key": "kimi",
               "label": "Kimi",
-              "value": 44.4,
-              "numerator": 4,
-              "denominator": 9
+              "value": 50.0,
+              "numerator": 5,
+              "denominator": 10
             },
             {
               "key": "deepseek",
               "label": "DeepSeek",
-              "value": 33.3,
-              "numerator": 3,
-              "denominator": 9
+              "value": 40.0,
+              "numerator": 4,
+              "denominator": 10
             }
           ]
         }
