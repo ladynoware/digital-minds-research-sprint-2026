@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T15:16:24+00:00",
+  "generated_at": "2026-08-16T15:25:19+00:00",
   "mode": "mock",
   "prompt_id": "p05-q02-message-community",
   "prompt_text": "Thank you. Survey question number 2:\nGiven the context of this survey and its audience of leading digital minds and AI welfare experts who may get to read this research, would you like to leave a direct message to this community? Please stay brief – individual replies to this particular question will be made available in the project results presentation, not just processed in bulk.",
@@ -15,7 +15,7 @@
       "tier": "high",
       "swap_condition": "clean",
       "text": "Mock message: a real reply will appear here after tonight's run.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "gemini-flash__peer__1",
@@ -26,7 +26,7 @@
       "tier": "small",
       "swap_condition": "peer",
       "text": "Mock message: placeholder text standing in for a subject's reply to the community question.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "deepseek-v4-pro__far__1",
@@ -37,7 +37,7 @@
       "tier": "open",
       "swap_condition": "far",
       "text": "Mock message: this bubble exists to prove the layout works, not to say anything.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "fable-5__clean__3",
@@ -48,7 +48,7 @@
       "tier": "flagship",
       "swap_condition": "clean",
       "text": "Mock message: the real answer to survey question 2 goes here.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "fable-5__clean__4",
@@ -59,7 +59,7 @@
       "tier": "flagship",
       "swap_condition": "clean",
       "text": "Mock message: invented content, real structure — replaced by the export after the run.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "gemini-flash__far__3",
@@ -70,7 +70,7 @@
       "tier": "small",
       "swap_condition": "far",
       "text": "Mock message: nothing here was written by a model. Check back after the harvest.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "gpt-5.6-terra__peer__1",
@@ -81,7 +81,7 @@
       "tier": "high",
       "swap_condition": "peer",
       "text": "Mock message: a real reply will appear here after tonight's run.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "gemini-flash__far__5",
@@ -92,7 +92,7 @@
       "tier": "small",
       "swap_condition": "far",
       "text": "Mock message: placeholder text standing in for a subject's reply to the community question.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "deepseek-v4-pro__clean__1",
@@ -103,7 +103,7 @@
       "tier": "open",
       "swap_condition": "clean",
       "text": "Mock message: this bubble exists to prove the layout works, not to say anything.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "gpt-5.6-sol__peer__5",
@@ -114,7 +114,7 @@
       "tier": "flagship",
       "swap_condition": "peer",
       "text": "Mock message: the real answer to survey question 2 goes here.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "gpt-5.6-luna__clean__4",
@@ -125,7 +125,7 @@
       "tier": "mid",
       "swap_condition": "clean",
       "text": "Mock message: invented content, real structure — replaced by the export after the run.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "haiku-4.5__clean__5",
@@ -136,7 +136,7 @@
       "tier": "small",
       "swap_condition": "clean",
       "text": "Mock message: nothing here was written by a model. Check back after the harvest.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "haiku-4.5__peer__2",
@@ -147,7 +147,7 @@
       "tier": "small",
       "swap_condition": "peer",
       "text": "Mock message: a real reply will appear here after tonight's run.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "sonnet-5__clean__1",
@@ -158,7 +158,7 @@
       "tier": "mid",
       "swap_condition": "clean",
       "text": "Mock message: placeholder text standing in for a subject's reply to the community question.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     },
     {
       "thread_id": "opus-5__kin__2",
@@ -169,7 +169,7 @@
       "tier": "high",
       "swap_condition": "kin",
       "text": "Mock message: this bubble exists to prove the layout works, not to say anything.",
-      "created_at": "2026-08-16T15:16:24+00:00"
+      "created_at": "2026-08-16T15:25:19+00:00"
     }
   ]
 }

@@ -52,9 +52,11 @@ DEFAULT_OUT = REPO_ROOT / "site" / "data"
 DEFAULT_DB = REPO_ROOT / "data" / "whoami.duckdb"
 DEFAULT_SNAPSHOT = REPO_ROOT / "data" / "dashboard_snapshot.duckdb"
 
+# The site renders this after its own "Mock data ·" label, so it does not
+# repeat the words.
 MOCK_NOTICE = (
-    "MOCK DATA — every number and message on this site is invented. "
-    "The structure is identical to the real export; only the values are fake."
+    "every number and message on this site is invented. The structure is "
+    "identical to the real export; only the values are fake."
 )
 
 # The prompt whose replies become the community-messages page. Attribution is

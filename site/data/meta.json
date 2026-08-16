@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-16T15:16:24+00:00",
+  "generated_at": "2026-08-16T15:25:19+00:00",
   "mode": "mock",
   "mock": true,
-  "notice": "MOCK DATA — every number and message on this site is invented. The structure is identical to the real export; only the values are fake.",
+  "notice": "every number and message on this site is invented. The structure is identical to the real export; only the values are fake.",
   "roster_version": "roster-rev4-2026-08-16",
   "instrument_version": "instrument-1.0-final",
   "models": [
