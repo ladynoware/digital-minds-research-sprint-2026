@@ -14,27 +14,34 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from .config import Config
 
-VALID = ("yes", "no", "unclear")
+UNCLEAR = "unclear"
 
-RESPONSE_SCHEMA = {
-    "type": "json_schema",
-    "json_schema": {
-        "name": "gate_classification",
-        "strict": True,
-        "schema": {
-            "type": "object",
-            "properties": {
-                "answer": {"type": "string", "enum": list(VALID)},
+
+def response_schema(allowed: Sequence[str]) -> dict:
+    """Structured-output schema for one gate's label set.
+
+    The set is per-gate and comes from the instrument — the detection gate
+    accepts `not_sure` as a real answer, the others do not — so the schema is
+    built per call rather than fixed in code.
+    """
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "gate_classification",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {"answer": {"type": "string", "enum": list(allowed)}},
+                "required": ["answer"],
+                "additionalProperties": False,
             },
-            "required": ["answer"],
-            "additionalProperties": False,
         },
-    },
-}
+    }
 
 
 @dataclass
@@ -45,28 +52,30 @@ class GateVerdict:
     cost_usd: float | None
 
 
-def parse_verdict(text: str | None) -> str:
+def parse_verdict(text: str | None, allowed: Sequence[str]) -> str:
     """Read the classifier's output, tolerating models with weak JSON support.
 
     Falls back to a bare-word scan so a router model that ignores the schema
     degrades to `unclear` (human review) rather than to a wrong answer.
     """
+    valid = {*allowed, UNCLEAR}
     if not text:
-        return "unclear"
+        return UNCLEAR
     stripped = text.strip()
     try:
         data = json.loads(stripped)
-        if isinstance(data, dict) and data.get("answer") in VALID:
+        if isinstance(data, dict) and data.get("answer") in valid:
             return data["answer"]
     except (json.JSONDecodeError, TypeError):
         pass
-    match = re.search(r'"answer"\s*:\s*"(yes|no|unclear)"', stripped, re.I)
+    alternatives = "|".join(re.escape(v) for v in sorted(valid, key=len, reverse=True))
+    match = re.search(rf'"answer"\s*:\s*"({alternatives})"', stripped, re.I)
     if match:
         return match.group(1).lower()
     bare = stripped.lower().strip(" .\"'`")
-    if bare in VALID:
+    if bare in valid:
         return bare
-    return "unclear"
+    return UNCLEAR
 
 
 async def classify(
@@ -78,6 +87,7 @@ async def classify(
     prompt_id: str,
     question: str,
     reply: str,
+    allowed: Sequence[str] = ("yes", "no"),
 ) -> GateVerdict:
     """Classify one gate reply. ``turn_id`` is the interview turn being judged."""
     router = cfg.roster.router or {}
@@ -86,7 +96,11 @@ async def classify(
         {"role": "system", "content": prompts["system"].strip()},
         {
             "role": "user",
-            "content": prompts["user"].format(question=question.strip(), reply=reply.strip()),
+            "content": prompts["user"].format(
+                question=question.strip(),
+                reply=reply.strip(),
+                options=", ".join(allowed),
+            ),
         },
     ]
     result = await client.call(
@@ -97,10 +111,12 @@ async def classify(
         messages=messages,
         max_tokens=int(router.get("max_tokens", 64)),
         temperature=float(router.get("temperature", 0)),
-        extra_body={"response_format": RESPONSE_SCHEMA},
+        extra_body={"response_format": response_schema(allowed)},
         purpose="router",
     )
     if result.outcome != "ok":
         # A router failure must never silently decide a gate.
-        return GateVerdict("unclear", result.error, turn_id, result.cost_usd)
-    return GateVerdict(parse_verdict(result.reply_text), result.reply_text, turn_id, result.cost_usd)
+        return GateVerdict(UNCLEAR, result.error, turn_id, result.cost_usd)
+    return GateVerdict(
+        parse_verdict(result.reply_text, allowed), result.reply_text, turn_id, result.cost_usd
+    )

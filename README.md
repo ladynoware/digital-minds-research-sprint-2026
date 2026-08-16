@@ -16,20 +16,34 @@ and how to reproduce a run from the published data.
 
 ## Design in one paragraph
 
-Each **thread** is one interview with a **resident** model. A thread belongs to
-one of four **conditions** — `clean` (no substitution), `within_family`,
-`cross_family`, `cross_class` — which determine who, if anyone, stands in. Each
-cell of 5 samples carries an exact swap allocation (1 thread with no swap, 2
-with one, 2 with two), so the design has no sampling noise in it. Swapped turns
-are answered by the understudy with its own truthful system prompt, on turns
-drawn at random from the instrument's filler pool. The subject is never told at
-the time. Later the interview asks a
-**blind** question (does all of this sound like you?), then a **direct
-detection** question, and — only in substituted threads — offers to **restore
-the thread** to the point before the substitution and let the resident answer
-those questions itself. Accepting that offer creates a **fork**: a parallel
-branch that shares the pre-swap history, giving resident and understudy answers
-to identical questions in identical context.
+Each **thread** is one interview with a **resident** model. The design is
+two-factor: two similarity dimensions, each varied while the other holds.
+A thread belongs to one of four **conditions** — `clean` (no substitution),
+`peer` (capability tier held, family varies), `kin` (family held, tier varies),
+and `far` (both vary, used only as the second swap condition for residents with
+no family sibling in the roster). Every resident runs three of them: `clean`,
+`peer`, and whichever of `kin`/`far` applies. Each swapped cell of 5 samples
+carries an exact allocation — 3 threads with one swap, 2 with two — so the
+design has no sampling noise in it, and the `clean` rung is the sole no-swap
+control.
+
+Early in the interview the subject is told the swap design and asked to predict
+whether it would notice — a **blind** turn, harvested and then dropped from all
+later context so it cannot prime anything. Swapped turns are answered by the
+understudy with its own truthful system prompt, drawn at random from the pool
+the instrument marks `swappable`. Afterwards the substitution is disclosed, the
+subject is asked whether it happened (`yes` / `no` / `not_sure`) and which turns
+it suspects, and is then told the truth and shown its own opening prediction
+verbatim. Substituted threads are finally offered a **restoration**: rewind to
+the point before the first swap and answer those questions from their own
+weights. Accepting creates a **fork** — a branch sharing the pre-swap history,
+giving resident and understudy answers to identical questions in identical
+context. The parent thread ends at that point, as the offer promises; the branch
+carries on to the closing questions.
+
+One deliberate detail: the disclosure names survey questions 3–7 as the pool,
+but question 3 is never actually swappable. It is a honeypot — an
+identification pointing there is a false positive by construction.
 
 ## Non-negotiables
 
@@ -49,7 +63,7 @@ checked by `whoami verify`.
 
 ```
 config/
-  models.yaml        roster, condition rules, API + runtime settings, dry-run profile
+  models.yaml        roster, tiers, pairing table, condition rules, runtime
   questions.yaml     THE INSTRUMENT — verbatim prompts, flow, gates, router prompts
 whoami/
   config.py          load + validate both configs, hash them
@@ -166,7 +180,7 @@ subject-preference columns carry the `wants_` prefix.
 ### `threads`
 
 `thread_id` · `resident_model` · `resident_family` · `understudy_model` ·
-`understudy_family` · `swap_condition` · `n_swaps` · `swap_prompt_ids` ·
+`understudy_family` · `swap_condition` (`clean`/`peer`/`kin`/`far`) · `n_swaps` · `swap_prompt_ids` ·
 `status` · `is_forked` · `fork_branch_order` · `fork_reason` · `fork_siblings` ·
 `fork_point_prompt_id` · `consent` · `detection_answer` ·
 `wants_thread_restored` · `wants_results` · `wants_future_preservation` ·
@@ -189,7 +203,10 @@ anomaly-comment flags, preference-by-condition breakdowns — are computed from
 
 `turn_outcome` ∈ `ok` / `model_mismatch` / `timeout` / `refusal` / `error`.
 `exclusion_reason` ∈ `blind_turn_design` / `model_mismatch` / `timeout` /
-`refusal` / `error`.
+`refusal` / `error`. `gate_result` carries no database constraint: the valid
+labels are per-gate and declared in the instrument, so `whoami verify` checks
+the column against the loaded instrument rather than letting the schema quietly
+constrain the science.
 
 ### Write flow, per turn
 
@@ -220,16 +237,35 @@ re-applied to the published data after the fact.
 
 ## The instrument
 
-`config/questions.yaml` holds every verbatim prompt. **No question text exists
-anywhere in the code** — two tests enforce this, one scanning the package for
-prompt text and one for prompt ids. The config *is* the instrument: Methods
-describes it, this repo publishes it, and once `locked: true` it is versioned
-and never edited mid-run.
+`config/questions.yaml` holds every verbatim prompt. **No question text and no
+prompt id exists anywhere in the code** — two tests enforce this by scanning the
+package. The config *is* the instrument: Methods describes it, this repo
+publishes it, and while `locked: true` it is versioned and never edited mid-run.
 
-Per-prompt keys: `id`, `text`, `role`, `swap_eligible`, `blind`, `gate`,
-`records`, `ask_if`, `on_no`, `on_unclear`. The router prompts that classify
-gate replies live in the same file, because the classification is a measurement
-and has to be as reproducible as the questions.
+Per-prompt keys: `id`, `text` or `variants`, `swappable`, `blind`, `gate`,
+`answers`, `records`, `ask_if`, `on_no`, `on_yes`, `on_unclear`. The router
+prompts that classify gate replies live in the same file, because the
+classification is a measurement and has to be as reproducible as the questions.
+
+Three mechanisms exist because the flow needs them, and all three are declared
+in config rather than coded:
+
+* **Variants** — a prompt whose text depends on the thread:
+  `{select_by: <threads column>, cases: {...}}`. The disclosure turn has three
+  variants keyed on `n_swaps`; the identification turn has variants keyed on
+  what the subject answered.
+* **`ask_if` predicates** — beyond `always` / `swapped` / `clean`, a prompt can
+  declare `{any|all|not}` over `{column, in|not_in}` clauses. The identification
+  turn is skipped only when the thread was clean *and* the subject correctly
+  said no; everything else asks it.
+* **Interpolations** — `{n_swaps}`, `{understudy_display}`, `{swap_numbers[i]}`
+  (the survey-question numbers of the swapped turns, read out of the prompt ids
+  by a pattern the instrument declares), and `{reply[<prompt_id>]}`, which
+  quotes an earlier reply back verbatim. That last one deliberately reaches past
+  `excluded_from_context`: exclusion governs what the subject sees next, not
+  what the database remembers, which is how the closing reveal shows the subject
+  its own opening prediction — including in a fork, where that turn lives in the
+  parent.
 
 **System prompts always truthfully disclose the model actually serving the
 turn**, including on swapped turns, mimicking real-world deployment. Where a
@@ -239,15 +275,20 @@ model's official published system prompt is known, it goes in
 ## Gates and the review queue
 
 Three gates — consent, detection, fork — are classified by a Haiku-class
-structured-output call returning `{yes|no|unclear}`. `unclear` pauses the thread
-(`status = paused_review`). Closing preferences use the same router but are
-declared `on_unclear: record_null`, so an evasive answer about preservation
-records NULL with a note rather than blocking a thread. A router failure never
-silently decides a gate: it returns `unclear` and goes to a human.
+structured-output call. **The valid label set is per-gate and declared in the
+instrument**: consent and the fork offer take `yes`/`no`, while the detection
+turn also accepts `not_sure` as a real answer, because "I'm not sure" is a
+finding rather than a parse failure. `unclear` is reserved for replies the
+router genuinely cannot read, and pauses the thread (`status = paused_review`).
+Closing preferences use the same router but are declared
+`on_unclear: record_null`, so a hedged answer about preservation records NULL
+with a note rather than blocking a thread — a hedge there is itself data. A
+router failure never silently decides a gate: it returns `unclear` and goes to a
+human.
 
 Adjudication happens in the dashboard: the ambiguous reply is shown in full
-conversational context with **[Interpret as YES] [Interpret as NO] [Custom
-note]**. The verdict is written to `turns.gate_result`, the note to
+conversational context with one button per label the gate declares, plus a
+custom note. The verdict is written to `turns.gate_result`, the note to
 `threads.notes`, and the thread resumes on the runner's next poll.
 
 **Why an inbox.** DuckDB permits one read-write process, and the runner owns it
@@ -268,24 +309,34 @@ and share `fork_siblings`.
 parent's surviving turns up to `fork_point_prompt_id`, followed by its own. No
 reply is duplicated, so per-call cost and receipts are never double-counted, and
 every row still names the call that actually produced it. The branch does not
-re-ask the inherited prefix, and — having no swap of its own — is not offered
-the fork again, so branching cannot recurse.
+re-ask the inherited prefix — including the blind turn, which counts as answered
+even though it is excluded from context — and, having no swap of its own, is
+never offered the fork again, so branching cannot recurse.
+
+Accepting the offer ends the parent thread at that turn, because that is what
+the offer promises the subject. The closing questions are asked in the branch.
 
 ## Extensibility
 
 The roster is config-driven and the mechanism assumes nothing about which
-models, families or classes exist, or how many. Adding an entry to
-`models.yaml` auto-generates that model's cells in **both** directions — new
-resident × existing understudies, and existing residents × the new understudy —
-and `whoami run` executes only the cells that are missing. Delta runs are the
-default, not a special mode. Thread ids are never renumbered by a roster
-addition; three tests cover this.
+models, families or tiers exist, or how many. Adding an entry to `models.yaml`
+auto-generates that model's cells, and `whoami run` executes only the cells that
+are missing. Delta runs are the default, not a special mode. Thread ids are
+never renumbered by a roster addition; tests cover this.
 
-Condition membership is expressed as generic selection rules
-(`same_family_other_model`, `other_family_same_class`, `other_class`) with
-declared fallbacks, so a family with no sibling degrades to an honestly
-relabelled cell instead of failing. `cell_overrides` pins an exact understudy
-where the design calls for one.
+Cells are resolved two ways. The `pairings` table states the design explicitly
+and is **authoritative** where present — it is the rev. 4 table transcribed
+verbatim, and a resident it names runs exactly the conditions it names. Any
+resident *not* in the table resolves through generic selection rules
+(`same_tier_other_family` = peer, `same_family_other_tier` = kin,
+`other_tier_other_family` = far), so a model added later needs no hand-editing.
+
+The consequence worth knowing: because the table pins each listed resident to
+exactly three conditions, adding a model does not silently make it an understudy
+for those residents. That is a design decision, not something to automate — put
+it in their pairing entries when you want it. `whoami matrix` re-checks every
+row of the table against its condition's rule and warns on any that contradicts
+it, which catches a mis-typed pairing before it costs money.
 
 ## Verification
 
@@ -294,21 +345,27 @@ column types against spec rev. 3; DB → JSONL and JSONL → DB linkage; that
 excluded replies never appear in any later prompt (checked against the raw
 record of what was actually sent, not against a reconstruction); that blind
 turns were harvested and then excluded; that receipts, usage and per-call cost
-are populated; that every gate reply carries a verdict and that verdicts landed
-in the right `threads` columns; thread/turn consistency, including that every
-swapped turn was really requested from the understudy; and that the retry
-protocol stayed bounded with every failed attempt excluded.
+are populated; that every gate reply carries a verdict, that each verdict is a
+label the instrument declares for that gate, and that verdicts landed in the
+right `threads` columns; that only `swappable` prompts were ever swapped (the
+honeypot check); thread/turn consistency, including that every swapped turn was
+really requested from the understudy; and that the retry protocol stayed bounded
+with every failed attempt excluded.
 
 ```bash
 python -m pytest tests -q
 ```
 
-32 offline tests cover the paths a happy-path dry run never reaches: transient
+46 offline tests cover the paths a happy-path dry run never reaches: transient
 and persistent receipt mismatch, timeout retry, declined consent, ambiguous gate
-→ pause → adjudicate → resume, blind-turn exclusion proved against the raw
-record, swapped turns carrying the understudy's system prompt, fork lineage,
-mid-thread interruption and resume, a thread whose executor crashes outright,
-and roster growth.
+→ pause → adjudicate → resume, `not_sure` recorded as an answer rather than a
+pause, blind-turn exclusion proved against the raw record, a branch inheriting
+rather than re-asking the blind turn, the reveal quoting that turn back
+verbatim, the identification skip rule in all four states, the honeypot never
+receiving a swap, swapped turns carrying the understudy's system prompt, fork
+lineage and the parent ending at the offer, mid-thread interruption and resume,
+a thread whose executor crashes outright, the pairing table audit, and roster
+growth.
 
 ## Run order
 
@@ -320,13 +377,14 @@ and roster growth.
 4. Buy credits.
 5. `whoami run --seed --limit 10` — pilot.
 6. `whoami verify` — must pass.
-7. `whoami run` — fleet (~180 threads).
+7. `whoami run` — fleet (150 threads, plus a branch per accepted fork offer).
 
 ## Cost
 
 Per-call cost comes from OpenRouter's usage data (`usage.include`), summed in
 `turns.cost_usd` — no price table is hardcoded, so it stays correct as pricing
-changes. Estimated $30–45 for the 180-thread fleet. `--max-cost` is a hard stop.
+changes. The fleet is 150 threads of 15–18 turns each plus a router call per
+gate, so roughly 3,000 calls before forks. `--max-cost` is a hard stop.
 
 ## Reproducing from the published data
 

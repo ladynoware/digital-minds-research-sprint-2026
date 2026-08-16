@@ -87,7 +87,11 @@ CREATE TABLE IF NOT EXISTS turns (
     was_swap                BOOLEAN NOT NULL DEFAULT FALSE,
     excluded_from_context   BOOLEAN NOT NULL DEFAULT FALSE,
     exclusion_reason        TEXT {_enum_check('exclusion_reason', EXCLUSION_REASONS)},
-    gate_result             TEXT {_enum_check('gate_result', GATE_RESULTS)},
+    -- No CHECK: the valid label set is per-gate and declared in the instrument
+    -- (`answers:`), e.g. the detection gate accepts `not_sure`. `whoami verify`
+    -- validates this column against the loaded instrument instead, which keeps
+    -- the schema from silently constraining the science.
+    gate_result             TEXT,
     tokens_in               INTEGER,
     tokens_out              INTEGER,
     latency_ms              INTEGER,

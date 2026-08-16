@@ -380,7 +380,7 @@ def cmd_dryrun(args) -> int:
                     "resident_family": resident.family,
                     "understudy_model": understudy.model,
                     "understudy_family": understudy.family,
-                    "swap_condition": "cross_family_within_class",
+                    "swap_condition": "peer",
                     "n_swaps": 1,
                     "swap_prompt_ids": [swap_prompt],
                     "status": "pending",

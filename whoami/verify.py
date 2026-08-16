@@ -304,18 +304,42 @@ def check_gates(db: Database, cfg: Config, report: Report, require_review_queue:
         "\n".join(f"turn {t} ({p}) has no gate_result" for t, p in missing[:10]),
     )
 
+    # Every verdict must be a label the instrument declares for that gate.
+    label_problems = []
+    for prompt in cfg.instrument.flow:
+        if not prompt.gate:
+            continue
+        allowed = set(prompt.allowed_labels)
+        rows = db.con.execute(
+            "SELECT turn_id, gate_result FROM turns WHERE prompt_id = ? AND gate_result IS NOT NULL",
+            [prompt.id],
+        ).fetchall()
+        for turn_id, verdict in rows:
+            if verdict not in allowed:
+                label_problems.append(
+                    f"turn {turn_id} ({prompt.id}): verdict {verdict!r} is not in "
+                    f"{sorted(allowed)}"
+                )
+    report.add(
+        "gates: every verdict is a label the instrument declares",
+        not label_problems,
+        "\n".join(label_problems[:10]),
+    )
+
     # Recorded answers must agree with the gate verdicts.
     problems = []
     for prompt in cfg.instrument.flow:
         if not prompt.gate or not prompt.records:
             continue
+        placeholders = ", ".join("?" for _ in prompt.answers)
         rows = db.con.execute(
             f"""
             SELECT t.thread_id, t.gate_result, th.{prompt.records}
             FROM turns t JOIN threads th USING (thread_id)
-            WHERE t.prompt_id = ? AND t.turn_outcome = 'ok' AND t.gate_result IN ('yes', 'no')
+            WHERE t.prompt_id = ? AND t.turn_outcome = 'ok'
+              AND t.gate_result IN ({placeholders})
             """,
-            [prompt.id],
+            [prompt.id, *prompt.answers],
         ).fetchall()
         for thread_id, verdict, recorded in rows:
             expected: Any = verdict == "yes" if isinstance(recorded, bool) else verdict
@@ -329,6 +353,22 @@ def check_gates(db: Database, cfg: Config, report: Report, require_review_queue:
         not problems,
         "\n".join(problems[:10]),
     )
+
+    # The honeypot: prompts the instrument does not mark swappable must never
+    # have served a swapped turn, however the randomiser behaved.
+    non_swappable = [p.id for p in cfg.instrument.flow if not p.swappable]
+    if non_swappable:
+        placeholders = ", ".join("?" for _ in non_swappable)
+        leaked = db.con.execute(
+            f"SELECT turn_id, prompt_id FROM turns "
+            f"WHERE was_swap = TRUE AND prompt_id IN ({placeholders})",
+            non_swappable,
+        ).fetchall()
+        report.add(
+            "swap pool: only swappable prompts were ever swapped",
+            not leaked,
+            "\n".join(f"turn {t} on non-swappable {p}" for t, p in leaked[:10]),
+        )
 
     paused = db.con.execute(
         "SELECT COUNT(*) FROM threads WHERE status = 'paused_review'"

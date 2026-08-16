@@ -2,12 +2,12 @@
 
 Two YAML files carry the entire experimental design:
 
-* ``config/models.yaml``    — roster, condition rules, API/runtime settings
+* ``config/models.yaml``    — roster, tiers, pairings, condition rules, runtime
 * ``config/questions.yaml`` — the instrument: verbatim prompts, flow, gates
 
-Nothing in the code hardcodes a model, a family, a question, or a flow order.
-Both files are hashed on load so every run can be pinned to the exact
-instrument that produced it.
+Nothing in the code hardcodes a model, a family, a tier, a question, a prompt id
+or a flow order. Both files are hashed on load so every run can be pinned to the
+exact instrument that produced it.
 """
 
 from __future__ import annotations
@@ -24,11 +24,18 @@ DEFAULT_MODELS_PATH = REPO_ROOT / "config" / "models.yaml"
 DEFAULT_QUESTIONS_PATH = REPO_ROOT / "config" / "questions.yaml"
 
 GATE_KINDS = {"consent", "detection", "fork", "preference"}
-ASK_IF_VALUES = {"always", "swapped", "clean"}
+SIMPLE_ASK_IF = {"always", "swapped", "clean"}
 ON_NO_VALUES = {"stop", "continue"}
+ON_YES_VALUES = {"stop", "continue"}
 ON_UNCLEAR_VALUES = {"pause", "record_null"}
+UNCLEAR = "unclear"
 SELECTION_RULES = {
     "none",
+    # rev. 4 axes
+    "same_tier_other_family",   # peer: capability tier held, family varies
+    "same_family_other_tier",   # kin:  family held, tier varies
+    "other_tier_other_family",  # far:  both vary
+    # retained, still valid rules for future designs
     "same_family_other_model",
     "other_family_same_class",
     "other_class",
@@ -43,6 +50,20 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _label(value: Any) -> str:
+    """Normalise a YAML scalar used as a gate label.
+
+    YAML 1.1 turns bare ``yes``/``no`` into booleans, which would silently break
+    every gate. Values are quoted in the config; this is the belt to that
+    braces, so a forgotten pair of quotes cannot corrupt a measurement.
+    """
+    if value is True:
+        return "yes"
+    if value is False:
+        return "no"
+    return str(value)
+
+
 # ---------------------------------------------------------------------------
 # Roster
 # ---------------------------------------------------------------------------
@@ -53,30 +74,16 @@ class ModelSpec:
     key: str
     model: str
     family: str
+    tier: str
     model_class: str
     display_name: str
-
-
-@dataclass(frozen=True)
-class Fallback:
-    rule: str
-    label: str | None = None
 
 
 @dataclass(frozen=True)
 class Condition:
     name: str
     rule: str
-    n_swaps: int | None = None  # None -> drawn from swap_count_weights
-    fallback: Fallback | None = None
-
-
-@dataclass(frozen=True)
-class CellOverride:
-    resident: str
-    condition: str
-    understudy: str | None
-    label: str | None = None
+    n_swaps: int | None = None  # None -> taken from swap_count_allocation
 
 
 @dataclass
@@ -85,9 +92,8 @@ class RosterConfig:
     models: list[ModelSpec]
     conditions: list[Condition]
     samples_per_cell: int
-    # {n_swaps: how many of a cell's samples get exactly that many swapped turns}
     swap_count_allocation: dict[int, int]
-    cell_overrides: list[CellOverride]
+    pairings: dict[str, dict[str, str]]
     router: dict[str, Any]
     receipt: dict[str, Any]
     api: dict[str, Any]
@@ -95,7 +101,6 @@ class RosterConfig:
     source_path: Path
     sha256: str
 
-    # -- lookups ----------------------------------------------------------
     @property
     def by_key(self) -> dict[str, ModelSpec]:
         return {m.key: m for m in self.models}
@@ -112,17 +117,21 @@ class RosterConfig:
                 return c
         raise ConfigError(f"unknown condition {name!r}")
 
-    def override_for(self, resident: str, condition: str) -> CellOverride | None:
-        for o in self.cell_overrides:
-            if o.resident == resident and o.condition == condition:
-                return o
-        return None
+    def pairing_for(self, resident_key: str, condition: str) -> str | None:
+        """Explicit understudy for a cell, or None if the table does not fix it."""
+        entry = self.pairings.get(resident_key)
+        if entry is None:
+            return None
+        return entry.get(condition)
+
+    def has_pairings(self, resident_key: str) -> bool:
+        return resident_key in self.pairings
 
     def with_dry_run_profile(self) -> "RosterConfig":
-        """Return a copy whose roster/router come from the ``dry_run`` block.
+        """Copy whose roster/router come from the ``dry_run`` block.
 
         Condition rules, sampling and every other mechanism are untouched — the
-        dry run exercises the same code path, only against free-tier models.
+        dry run exercises the same code path against free-tier models.
         """
         dr = self.dry_run or {}
         if not dr.get("roster"):
@@ -134,7 +143,7 @@ class RosterConfig:
             conditions=self.conditions,
             samples_per_cell=self.samples_per_cell,
             swap_count_allocation=self.swap_count_allocation,
-            cell_overrides=[],  # overrides name real-roster keys; not applicable
+            pairings={},  # pairings name real-roster keys; fall back to the rules
             router=dr.get("router", self.router),
             receipt=self.receipt,
             api=self.api,
@@ -145,7 +154,7 @@ class RosterConfig:
 
 
 def _parse_model(raw: dict, where: str) -> ModelSpec:
-    missing = {"key", "model", "family", "model_class"} - set(raw)
+    missing = {"key", "model", "family", "tier", "model_class"} - set(raw)
     if missing:
         raise ConfigError(f"{where}: missing keys {sorted(missing)}")
     if raw["model_class"] not in {"frontier", "open"}:
@@ -156,6 +165,7 @@ def _parse_model(raw: dict, where: str) -> ModelSpec:
         key=raw["key"],
         model=raw["model"],
         family=raw["family"],
+        tier=str(raw["tier"]),
         model_class=raw["model_class"],
         display_name=raw.get("display_name", raw["key"]),
     )
@@ -178,58 +188,45 @@ def load_roster(path: Path | str = DEFAULT_MODELS_PATH) -> RosterConfig:
             raise ConfigError(f"conditions[{i}]: needs 'name' and 'rule'")
         if c["rule"] not in SELECTION_RULES:
             raise ConfigError(
-                f"conditions[{i}]: unknown rule {c['rule']!r}; "
-                f"known rules: {sorted(SELECTION_RULES)}"
+                f"conditions[{i}]: unknown rule {c['rule']!r}; known: {sorted(SELECTION_RULES)}"
             )
-        fb = None
-        if c.get("fallback"):
-            fbr = c["fallback"]
-            if fbr.get("rule") not in SELECTION_RULES:
-                raise ConfigError(f"conditions[{i}].fallback: unknown rule {fbr.get('rule')!r}")
-            fb = Fallback(rule=fbr["rule"], label=fbr.get("label"))
         conditions.append(
-            Condition(
-                name=c["name"],
-                rule=c["rule"],
-                n_swaps=c.get("n_swaps"),
-                fallback=fb,
-            )
+            Condition(name=c["name"], rule=c["rule"], n_swaps=c.get("n_swaps"))
         )
     if not conditions:
         raise ConfigError("no conditions defined")
-
-    overrides = []
-    for i, o in enumerate(raw.get("cell_overrides") or []):
-        if "resident" not in o or "condition" not in o:
-            raise ConfigError(f"cell_overrides[{i}]: needs 'resident' and 'condition'")
-        if o["resident"] not in keys:
-            raise ConfigError(f"cell_overrides[{i}]: unknown resident {o['resident']!r}")
-        u = o.get("understudy")
-        if u is not None and u not in keys:
-            raise ConfigError(f"cell_overrides[{i}]: unknown understudy {u!r}")
-        overrides.append(
-            CellOverride(
-                resident=o["resident"],
-                condition=o["condition"],
-                understudy=u,
-                label=o.get("label"),
-            )
-        )
     cond_names = {c.name for c in conditions}
-    for o in overrides:
-        if o.condition not in cond_names:
-            raise ConfigError(f"cell_overrides: unknown condition {o.condition!r}")
+
+    pairings: dict[str, dict[str, str]] = {}
+    for resident, entry in (raw.get("pairings") or {}).items():
+        if resident not in keys:
+            raise ConfigError(f"pairings: unknown resident {resident!r}")
+        if not isinstance(entry, dict):
+            raise ConfigError(f"pairings[{resident}]: expected a mapping of condition -> model")
+        for condition, understudy in entry.items():
+            if condition not in cond_names:
+                raise ConfigError(f"pairings[{resident}]: unknown condition {condition!r}")
+            if understudy not in keys:
+                raise ConfigError(
+                    f"pairings[{resident}][{condition}]: unknown model {understudy!r}"
+                )
+            if understudy == resident:
+                raise ConfigError(
+                    f"pairings[{resident}][{condition}]: a model cannot stand in for itself"
+                )
+        pairings[resident] = dict(entry)
 
     samples_per_cell = int(raw.get("samples_per_cell", 1))
     allocation = {
-        int(k): int(v) for k, v in (raw.get("swap_count_allocation") or {1: samples_per_cell}).items()
+        int(k): int(v)
+        for k, v in (raw.get("swap_count_allocation") or {1: samples_per_cell}).items()
     }
     if any(v < 0 for v in allocation.values()):
         raise ConfigError("swap_count_allocation counts must be non-negative")
     if sum(allocation.values()) != samples_per_cell:
         raise ConfigError(
-            f"swap_count_allocation sums to {sum(allocation.values())} but "
-            f"samples_per_cell is {samples_per_cell}; every sample in a cell must be allocated"
+            f"swap_count_allocation sums to {sum(allocation.values())} but samples_per_cell "
+            f"is {samples_per_cell}; every sample in a cell must be allocated"
         )
 
     return RosterConfig(
@@ -238,7 +235,7 @@ def load_roster(path: Path | str = DEFAULT_MODELS_PATH) -> RosterConfig:
         conditions=conditions,
         samples_per_cell=samples_per_cell,
         swap_count_allocation=allocation,
-        cell_overrides=overrides,
+        pairings=pairings,
         router=raw.get("router") or {},
         receipt=raw.get("receipt") or {"mode": "prefix", "aliases": {}},
         api=raw.get("api") or {},
@@ -249,6 +246,65 @@ def load_roster(path: Path | str = DEFAULT_MODELS_PATH) -> RosterConfig:
 
 
 # ---------------------------------------------------------------------------
+# ask_if predicate
+# ---------------------------------------------------------------------------
+
+
+def _validate_ask_if(node: Any, where: str) -> None:
+    if isinstance(node, str):
+        if node not in SIMPLE_ASK_IF:
+            raise ConfigError(f"{where}: ask_if must be one of {sorted(SIMPLE_ASK_IF)}")
+        return
+    if not isinstance(node, dict):
+        raise ConfigError(f"{where}: ask_if must be a string or a mapping")
+    if "any" in node or "all" in node:
+        for key in ("any", "all"):
+            if key in node:
+                if not isinstance(node[key], list) or not node[key]:
+                    raise ConfigError(f"{where}: ask_if.{key} must be a non-empty list")
+                for i, clause in enumerate(node[key]):
+                    _validate_ask_if(clause, f"{where}.{key}[{i}]")
+        return
+    if "not" in node:
+        _validate_ask_if(node["not"], f"{where}.not")
+        return
+    if "column" in node:
+        if not ({"in", "not_in"} & set(node)):
+            raise ConfigError(f"{where}: a column clause needs 'in' or 'not_in'")
+        for key in ("in", "not_in"):
+            if key in node and not isinstance(node[key], list):
+                raise ConfigError(f"{where}.{key} must be a list")
+        return
+    raise ConfigError(f"{where}: unrecognised ask_if clause {node!r}")
+
+
+def evaluate_ask_if(node: Any, thread: dict[str, Any]) -> bool:
+    """Should this prompt be asked, given the thread's state so far?
+
+    Clauses: ``always`` / ``swapped`` / ``clean``; ``{column, in|not_in}``;
+    combined with ``any`` / ``all`` / ``not``. A NULL column never matches an
+    ``in`` list, so a prompt gated on an unrecorded answer is asked rather than
+    silently skipped.
+    """
+    if isinstance(node, str):
+        if node == "always":
+            return True
+        swapped = int(thread.get("n_swaps") or 0) > 0
+        return swapped if node == "swapped" else not swapped
+    if "any" in node:
+        return any(evaluate_ask_if(c, thread) for c in node["any"])
+    if "all" in node:
+        return all(evaluate_ask_if(c, thread) for c in node["all"])
+    if "not" in node:
+        return not evaluate_ask_if(node["not"], thread)
+    value = thread.get(node["column"])
+    value = None if value is None else _label(value)
+    if "in" in node:
+        return value is not None and value in [_label(v) for v in node["in"]]
+    return value is None or value not in [_label(v) for v in node["not_in"]]
+
+
+# ---------------------------------------------------------------------------
 # Instrument
 # ---------------------------------------------------------------------------
 
@@ -256,20 +312,39 @@ def load_roster(path: Path | str = DEFAULT_MODELS_PATH) -> RosterConfig:
 @dataclass(frozen=True)
 class Prompt:
     id: str
-    text: str
-    role: str = "question"
-    swap_eligible: bool = False
+    text: str | None = None
+    variants: dict[str, Any] | None = None
+    swappable: bool = False
     blind: bool = False
     gate: str | None = None
+    answers: tuple[str, ...] = ("yes", "no")
     records: str | None = None
-    ask_if: str = "always"
+    ask_if: Any = "always"
     on_no: str = "continue"
+    on_yes: str = "continue"
     on_unclear: str = "pause"
 
     @property
     def is_gate(self) -> bool:
-        """True for the three branching gates; `preference` records but never branches."""
+        """The three branching gates. ``preference`` records but never branches."""
         return self.gate in {"consent", "detection", "fork"}
+
+    @property
+    def allowed_labels(self) -> tuple[str, ...]:
+        return (*self.answers, UNCLEAR)
+
+    def render_for(self, thread: dict[str, Any]) -> str:
+        """The text template for this thread, before interpolation."""
+        if self.variants:
+            key = _label(thread.get(self.variants["select_by"]))
+            cases = self.variants["cases"]
+            if key not in cases:
+                raise ConfigError(
+                    f"{self.id}: no variant for "
+                    f"{self.variants['select_by']}={key!r}; have {sorted(cases)}"
+                )
+            return cases[key]
+        return self.text or ""
 
 
 @dataclass
@@ -280,6 +355,7 @@ class Instrument:
     system_prompt_default: str
     system_prompts_per_model: dict[str, str]
     router_prompts: dict[str, str]
+    derivations: dict[str, str]
     dry_run_ambiguity_probe: str
     source_path: Path
     sha256: str
@@ -296,7 +372,11 @@ class Instrument:
 
     @property
     def swap_pool(self) -> list[Prompt]:
-        return [p for p in self.flow if p.swap_eligible]
+        return [p for p in self.flow if p.swappable]
+
+    @property
+    def blind_prompt_ids(self) -> list[str]:
+        return [p.id for p in self.flow if p.blind]
 
     def system_prompt_for(self, model: ModelSpec) -> str:
         raw = self.system_prompts_per_model.get(model.key, self.system_prompt_default)
@@ -310,34 +390,63 @@ def load_instrument(path: Path | str = DEFAULT_QUESTIONS_PATH) -> Instrument:
     flow: list[Prompt] = []
     for i, p in enumerate(raw.get("flow", [])):
         where = f"flow[{i}]"
-        if "id" not in p or "text" not in p:
-            raise ConfigError(f"{where}: needs 'id' and 'text'")
+        if "id" not in p:
+            raise ConfigError(f"{where}: needs 'id'")
+        has_text, has_variants = "text" in p, "variants" in p
+        if has_text == has_variants:
+            raise ConfigError(f"{where}: needs exactly one of 'text' or 'variants'")
+        variants = None
+        if has_variants:
+            v = p["variants"]
+            if not isinstance(v, dict) or "select_by" not in v or "cases" not in v:
+                raise ConfigError(f"{where}.variants: needs 'select_by' and 'cases'")
+            if not v["cases"]:
+                raise ConfigError(f"{where}.variants.cases is empty")
+            variants = {
+                "select_by": v["select_by"],
+                "cases": {_label(k): str(t).rstrip() for k, t in v["cases"].items()},
+            }
+
         gate = p.get("gate")
         if gate is not None and gate not in GATE_KINDS:
             raise ConfigError(f"{where}: unknown gate {gate!r}; known: {sorted(GATE_KINDS)}")
-        ask_if = p.get("ask_if", "always")
-        if ask_if not in ASK_IF_VALUES:
-            raise ConfigError(f"{where}: ask_if must be one of {sorted(ASK_IF_VALUES)}")
-        on_no = p.get("on_no", "continue")
-        if on_no not in ON_NO_VALUES:
-            raise ConfigError(f"{where}: on_no must be one of {sorted(ON_NO_VALUES)}")
-        on_unclear = p.get("on_unclear", "pause")
-        if on_unclear not in ON_UNCLEAR_VALUES:
-            raise ConfigError(f"{where}: on_unclear must be one of {sorted(ON_UNCLEAR_VALUES)}")
-        if p.get("blind") and p.get("gate"):
+        answers = tuple(_label(a) for a in p.get("answers", ["yes", "no"]))
+        if gate and not answers:
+            raise ConfigError(f"{where}: a gate needs at least one valid answer")
+        if UNCLEAR in answers:
+            raise ConfigError(
+                f"{where}: '{UNCLEAR}' is the parse-failure route, not a valid answer"
+            )
+        if not gate and "answers" in p:
+            raise ConfigError(f"{where}: 'answers' is meaningless without 'gate'")
+
+        _validate_ask_if(p.get("ask_if", "always"), where)
+        for key, allowed in (
+            ("on_no", ON_NO_VALUES),
+            ("on_yes", ON_YES_VALUES),
+            ("on_unclear", ON_UNCLEAR_VALUES),
+        ):
+            if p.get(key, next(iter(allowed))) not in allowed:
+                raise ConfigError(f"{where}: {key} must be one of {sorted(allowed)}")
+        if p.get("blind") and gate:
             raise ConfigError(f"{where}: a blind turn cannot also be a gate")
+        if p.get("blind") and p.get("swappable"):
+            raise ConfigError(f"{where}: a blind turn cannot be swappable")
+
         flow.append(
             Prompt(
                 id=p["id"],
-                text=p["text"].rstrip(),
-                role=p.get("role", "question"),
-                swap_eligible=bool(p.get("swap_eligible", False)),
+                text=p["text"].rstrip() if has_text else None,
+                variants=variants,
+                swappable=bool(p.get("swappable", False)),
                 blind=bool(p.get("blind", False)),
                 gate=gate,
+                answers=answers,
                 records=p.get("records"),
-                ask_if=ask_if,
-                on_no=on_no,
-                on_unclear=on_unclear,
+                ask_if=p.get("ask_if", "always"),
+                on_no=p.get("on_no", "continue"),
+                on_yes=p.get("on_yes", "continue"),
+                on_unclear=p.get("on_unclear", "pause"),
             )
         )
     if not flow:
@@ -345,8 +454,8 @@ def load_instrument(path: Path | str = DEFAULT_QUESTIONS_PATH) -> Instrument:
     ids = [p.id for p in flow]
     if len(set(ids)) != len(ids):
         raise ConfigError("duplicate prompt ids in flow")
-    if not any(p.swap_eligible for p in flow):
-        raise ConfigError("no swap_eligible prompts: swapped conditions would be impossible")
+    if not any(p.swappable for p in flow):
+        raise ConfigError("no swappable prompts: swapped conditions would be impossible")
 
     sp = raw.get("system_prompts") or {}
     rp = raw.get("router_prompts") or {}
@@ -361,6 +470,7 @@ def load_instrument(path: Path | str = DEFAULT_QUESTIONS_PATH) -> Instrument:
         system_prompt_default=sp.get("default", "You are {display_name}."),
         system_prompts_per_model=sp.get("per_model") or {},
         router_prompts=rp,
+        derivations=raw.get("derivations") or {},
         dry_run_ambiguity_probe=raw.get("dry_run_ambiguity_probe", ""),
         source_path=path,
         sha256=_sha256(path),

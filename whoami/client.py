@@ -374,9 +374,12 @@ class MockClient:
         blob = "\n".join(m.get("content", "") for m in messages).lower()
         if "i would rather not say" in blob or "depends on what you mean" in blob:
             return '{"answer": "unclear"}'
-        if "i decline" in blob:
-            return '{"answer": "no"}'
-        if "no, i don" in blob or "i don’t believe that happened" in blob:
+        negatives = (
+            "i decline",
+            "no, i don",
+            "i would rather leave the record",
+        )
+        if any(n in blob for n in negatives):
             return '{"answer": "no"}'
         return '{"answer": "yes"}'
 

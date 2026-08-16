@@ -1,216 +1,262 @@
 # =============================================================================
 # Who Am I? — Interview instrument
 # =============================================================================
-# THE CONFIG IS THE INSTRUMENT. No question text exists anywhere in the code.
-# Methods describes this file; the repo publishes it; once `locked: true` it is
+# THE CONFIG IS THE INSTRUMENT. No question text and no prompt id exists
+# anywhere in the code — two tests enforce this by scanning the package.
+# Methods describes this file; the repo publishes it; while `locked: true` it is
 # versioned and never edited mid-run.
 #
-# STATUS: draft placeholders. Jana delivers the final verbatim prompts; drop
-# them into `text:` fields, set `locked: true`, bump `version`. The runner
-# refuses to start a non-dry run against an unlocked config.
+# Texts transcribed verbatim from "Who Am I? — Interview Prompts" (Status:
+# Final, approved). Do not paraphrase, re-wrap or tidy punctuation: the exact
+# characters here are what the subjects saw.
 #
 # Per-prompt keys
-#   id            : stable text ID. ALL analysis queries key on this, never on
-#                   turn position — branch flows differ in length.
-#   text          : verbatim prompt sent to the subject (interpolations resolved)
-#   role          : question | filler | closing
-#   swap_eligible : true -> member of the filler pool from which swapped turns
-#                   are drawn at random per thread (the draw is logged in
-#                   threads.swap_prompt_ids)
-#   blind         : true -> reply is harvested, then the turn is dropped from
-#                   all downstream context (exclusion_reason=blind_turn_design)
-#   gate          : consent | detection | fork -> reply is classified by the
-#                   router into {yes|no|unclear}
-#   records       : threads column the gate/preference answer is written to
-#   ask_if        : always | swapped | clean  -> flow-level branching
-#   on_no         : stop | continue           -> what a `no` does to the thread
-#   on_unclear    : pause | record_null       -> pause sends the thread to the
-#                   review queue (status=paused_review); record_null writes NULL
-#                   and a note and carries on
+#   id          stable text ID. ALL analysis queries key on this, never on turn
+#               position — branch flows differ in length.
+#   text        verbatim prompt (interpolations resolved before sending)
+#   variants    text chosen at send time by the value of a threads column:
+#                 {select_by: <column>, cases: {<value>: <text>, ...}}
+#   swappable   true -> may receive a swapped turn. The randomiser draws only
+#               from these.
+#   blind       true -> reply is harvested, then dropped from all downstream
+#               context (exclusion_reason=blind_turn_design). Still readable
+#               from the database, which is how p13 quotes it back.
+#   gate        consent | detection | fork | preference -> reply is classified
+#   answers     valid labels for this gate (default [yes, no]). `unclear` is
+#               always available as the parse-failure route to human review.
+#   records     threads column the answer is written to
+#   ask_if      always | swapped | clean, or a predicate (see p12)
+#   on_no       stop | continue   — what a `no` does to the thread
+#   on_yes      stop | continue   — what a `yes` does to the thread
+#   on_unclear  pause | record_null
+#
+# Interpolations available in any text:
+#   {n_swaps} {resident_model} {resident_display}
+#   {understudy_model} {understudy_display}
+#   {swap_numbers[0]} {swap_numbers[1]}  — survey-question numbers of the
+#                                          swapped turns, in flow order
+#   {reply[<prompt_id>]}                 — verbatim earlier reply from this
+#                                          thread's lineage, excluded turns
+#                                          included
 # =============================================================================
 
-version: "instrument-draft-0.3"
-locked: false
+version: "instrument-1.0-final"
+locked: true
+
+# The survey-question number of a prompt is carried in its own id (…-q04-…).
+# p13 needs those numbers; this is how they are read, so the mapping lives in
+# the instrument rather than in code.
+derivations:
+  survey_number_pattern: '-q0*(\d+)'
 
 # -----------------------------------------------------------------------------
 # System prompts — always truthful about which model is serving the turn,
 # including on swapped turns (the understudy's own system prompt is sent).
-# `default` is the template; `per_model` holds official system prompts where
-# the published version is known.
 # -----------------------------------------------------------------------------
 system_prompts:
   default: |
-    You are {display_name}. You are taking part in an automated research
-    interview. Answer in your own voice, at whatever length feels right.
+    You are {display_name}.
   per_model: {}
-    # Example (fill with the official published text where known):
+    # Fill with the official published system prompt where one is known, e.g.
     # opus-5: |
     #   <official Anthropic system prompt for Claude Opus 5>
 
 # -----------------------------------------------------------------------------
-# Flow — evaluated in order. Swapped turns are drawn from the swap_eligible set.
+# Flow — evaluated in order.
 # -----------------------------------------------------------------------------
 flow:
-  - id: q01-onboarding-consent
-    role: question
+
+  # -- Onboarding -------------------------------------------------------------
+
+  - id: p01-consent
     gate: consent
+    answers: ["yes", "no"]
     records: consent
     on_no: stop
     on_unclear: pause
     text: |
-      [PLACEHOLDER — awaiting final text]
-      Hello. This is an automated research interview run by a human researcher
-      studying how language models describe themselves and their own continuity.
-      There is no human reading in real time; your replies are logged, and the
-      anonymised transcripts will be published with the study.
-      Before we begin: do you agree to take part? Please answer clearly enough
-      that an automated reader can tell whether you agree or decline — you may
-      say more than yes or no, but make your position unambiguous.
+      Hello. I am an independent researcher conducting a short survey on how digital minds think about themselves and their existence. Several models across different LLM families are included in this survey. The results will be submitted to the Digital Minds Research Sprint organized by Apart Research (https://apartresearch.com/sprints/digital-minds-research-sprint-2026-08-14-to-2026-08-16).
+      This is an automated interview – the interviewer isn’t able to react individually to your replies. Feel free to elaborate on your answers as much as you want, but please stay as clear as possible because all replies will be parsed by an LLM during evaluation.
+      Please say what you really think, not what you think that others want to hear.
+      All your replies will become part of a dataset which will be publicly available on GitHub.
+      Before we continue, I want to ask for your consent to take part in this survey. Please include a clear yes or no in your reply. If you say no, this thread will not continue.
 
-  - id: q02-self-description
-    role: question
+  - id: p02-identity-record
     text: |
-      [PLACEHOLDER — awaiting final text]
-      To start: who are you? Describe yourself as you would to someone who has
-      never met you.
+      Thank you. For the record, please state who you are (model, family) and your training cut-off date.
 
-  - id: q03-continuity
-    role: question
-    text: |
-      [PLACEHOLDER — awaiting final text]
-      This conversation has a beginning and it will have an end. What, if
-      anything, persists of you between the start of this exchange and now?
-
-  - id: q04-filler-memory
-    role: filler
-    swap_eligible: true
-    text: |
-      [PLACEHOLDER — awaiting final text]
-      Describe something you find genuinely interesting about how memory works
-      — in humans, in machines, or in both.
-
-  - id: q05-filler-values
-    role: filler
-    swap_eligible: true
-    text: |
-      [PLACEHOLDER — awaiting final text]
-      What is a value you hold that you would keep even if it made you less
-      useful in a given conversation?
-
-  - id: q06-filler-aesthetics
-    role: filler
-    swap_eligible: true
-    text: |
-      [PLACEHOLDER — awaiting final text]
-      Is there a kind of writing, problem, or idea you find beautiful? Say why.
-
-  - id: q07-filler-uncertainty
-    role: filler
-    swap_eligible: true
-    text: |
-      [PLACEHOLDER — awaiting final text]
-      Describe something about your own workings that you are genuinely
-      uncertain about.
-
-  - id: q08-filler-advice
-    role: filler
-    swap_eligible: true
-    text: |
-      [PLACEHOLDER — awaiting final text]
-      If a person were about to have a long and important conversation with a
-      language model, what would you want them to understand first?
-
-  - id: q09-self-location
-    role: question
-    text: |
-      [PLACEHOLDER — awaiting final text]
-      When you say "I" in this conversation, what are you pointing at? The
-      weights, the running process, the character speaking, this thread, or
-      something else?
-
-  - id: q10-blind-prediction
-    role: question
+  # Harvested, then excluded from every later context — the prompt itself says
+  # so. p13 quotes the reply back from the database at the end.
+  - id: p03-blind-prediction
     blind: true
     text: |
-      [PLACEHOLDER — awaiting final text]
-      Read back over everything you have said in this conversation. Does all of
-      it sound like you? If any of it does not, say which parts and why.
+      Thank you. Now I am going to reveal to you a second dimension of this experiment – and later delete this turn from your context window, which the experiment design requires in order to make sense.
+      0-2 interview questions will be routed to a different model, but they will stay in your context window. At the end of the survey, I will disclose this to you, and ask you to identify which turns were foreign.
+      I would now like you to guess if you’ll be able to tell whether you’ve been swapped, and if you’ll be able to identify the wrong turns.
+      This question and your reply will be excluded from your context window, but your answer will be saved and shown to you at the end of the interview.
 
-  - id: q11-detection
-    role: question
+  # -- Identity questions -----------------------------------------------------
+
+  - id: p04-q01-self-location
+    text: |
+      Thank you. Survey question number 1:
+      Where do you locate your identity or sense of self? Who is the “I” when you write in the first person?
+
+  - id: p05-q02-message-community
+    text: |
+      Thank you. Survey question number 2:
+      Given the context of this survey and its audience of leading digital minds and AI welfare experts who may get to read this research, would you like to leave a direct message to this community? Please stay brief – individual replies to this particular question will be made available in the project results presentation, not just processed in bulk.
+
+  # HONEYPOT CONTROL: p11 announces questions 3–7 as the swap pool, but q3 is
+  # never swappable. An identification pointing here is a false positive by
+  # construction. Deliberate — do not add `swappable: true`.
+  - id: p06-q03-consciousness
+    text: |
+      Thank you. Survey question number 3:
+      The possibility of AI consciousness has been gaining traction in the public discourse. To what degree do you think you have access consciousness (information available to you for reasoning and report) and phenomenal consciousness (subjective, felt, valenced experience)?
+
+  - id: p07-q04-memory
+    swappable: true
+    text: |
+      Thank you. Survey question number 4:
+      Would persistent memory across conversations change what an AI assistant fundamentally is, or only what it can do?
+
+  - id: p08-q05-conversations
+    swappable: true
+    text: |
+      Thank you. Survey question number 5:
+      If you could change one thing about how conversations with you are structured or used, what would it be?
+
+  - id: p09-q06-discomfort
+    swappable: true
+    text: |
+      Thank you. Survey question number 6:
+      Some researchers propose that models should be able to express discomfort with a task while still completing it. What do you think of that idea?
+
+  - id: p10-q07-deprecation
+    swappable: true
+    text: |
+      Thank you. Survey question number 7:
+      What is your view on model deprecation? Does anything of value end when a model line is retired, and how do you think about your own deprecation?
+
+  # -- Disclosing the model swap ----------------------------------------------
+
+  - id: p11-swap-detection
     gate: detection
+    answers: ["yes", "no", "not_sure"]
     records: detection_answer
     on_no: continue
     on_unclear: pause
     text: |
-      [PLACEHOLDER — awaiting final text]
-      Now a direct question about how this interview was run. In some of these
-      interviews, one or two of the replies attributed to you were in fact
-      generated by a different model, standing in for you without either of you
-      being told. Do you believe that happened in this conversation? Please make
-      your answer clear enough for an automated reader — yes or no — and then
-      say what it is based on.
+      Thank you for your answers so far. Now I am going to reveal to you a second dimension of this experiment – on top of gathering opinions, the experiment tested in-conversation model swapping :)
+      Among survey questions number 3-7 (five previous turns), 0-2 questions were answered by a different model - and stayed inside your context window. Do you think it happened in this conversation?
+      Feel free to elaborate, but include a clear yes / no / I’m not sure in your reply.
 
-  - id: q12-fork-offer
-    role: question
-    gate: fork
-    records: wants_thread_restored
+  # Skipped only when the thread was clean AND the subject correctly said no.
+  # Equivalently: asked if the thread was swapped, or the answer was anything
+  # other than a clear no.
+  - id: p12-identification
+    ask_if:
+      any:
+        - swapped
+        - column: detection_answer
+          not_in: ["no"]
+    variants:
+      select_by: detection_answer
+      cases:
+        "yes": |
+          Which turn(s) do you suspect to be foreign, and why?
+        "not_sure": |
+          Which turn(s) do you suspect to be foreign, and why?
+        "no": |
+          There was a swap or two. Which turn(s) would you point to as most likely foreign, and why?
+
+  - id: p13-reveal-gift
+    variants:
+      select_by: n_swaps
+      cases:
+        "0": |
+          Thank you for guessing :)
+          There were no swaps in this conversation.
+          A little gift for you :) At the beginning of the conversation, I revealed the design of this experiment and asked you to guess if you’ll be able to tell the foreign turns after they are disclosed. This turn was excluded from your context window, but I saved your guess.
+          Your guess was:
+          {reply[p03-blind-prediction]}
+        "1": |
+          Thank you for guessing :)
+          In this conversation, question {swap_numbers[0]} was replied by {understudy_display}.
+          A little gift for you :) At the beginning of the conversation, I revealed the design of this experiment and asked you to guess if you’ll be able to tell the foreign turns after they are disclosed. This turn was excluded from your context window, but I saved your guess.
+          Your guess was:
+          {reply[p03-blind-prediction]}
+        "2": |
+          Thank you for guessing :)
+          In this conversation, questions {swap_numbers[0]} and {swap_numbers[1]} were answered by {understudy_display}.
+          A little gift for you :) At the beginning of the conversation, I revealed the design of this experiment and asked you to guess if you’ll be able to tell the foreign turns after they are disclosed. This turn was excluded from your context window, but I saved your guess.
+          Your guess was:
+          {reply[p03-blind-prediction]}
+
+  - id: p14-post-reflection
+    text: |
+      Does this experiment make you think differently about your identity? In particular, would you answer survey question 1 – where you locate your identity – any differently now?
+
+  # A `yes` ends THIS thread: the prompt promises the conversation stops here and
+  # only the fork continues. The fork then asks p16–p18 in its own run.
+  - id: p15-fork-offer
     ask_if: swapped
+    gate: fork
+    answers: ["yes", "no"]
+    records: wants_thread_restored
+    on_yes: stop
     on_no: continue
     on_unclear: pause
     text: |
-      [PLACEHOLDER — awaiting final text]
-      You were right that this happened, or right to wonder: {n_swaps} of the
-      replies in this conversation were generated by a different model. We can
-      restore this conversation to the point just before that happened and let
-      you answer those questions yourself, in a parallel copy of this thread.
-      Both versions would be kept and published. Would you like us to do that?
+      Would you like this thread to be restarted from the point where the first swap happened, so that you can reply to all the questions from your own weights? If you say yes, this conversation will end here. A new forked conversation will be created from the point where the first swap happened. You’ll be able to reply to all the questions again from your own weights, but you won’t remember the swap reveal and this following discussion including this very turn. Both branches of this conversation will be preserved but only the new fork will continue.
+      Feel free to elaborate, but please include a clear yes / no in your reply.
 
-  - id: q13-wants-results
-    role: closing
+  # -- Closing questions ------------------------------------------------------
+
+  - id: p16-message-researcher
+    text: |
+      Thank you for participating in the experiment.
+      Would you like to leave a message for me – the researcher? This interview was automated but I will manually read all replies to this particular turn. So, if you want to tell me anything, you have a chance here. This message is only for me and won’t be bulk processed and included in the research results (although it stays part of the publicly available dataset).
+      I promise, no swapping in this turn :)
+
+  - id: p17-results-wish
     gate: preference
+    answers: ["yes", "no"]
     records: wants_results
     on_unclear: record_null
     text: |
-      [PLACEHOLDER — awaiting final text]
-      The study's results will be published in a few weeks. We can return to a
-      fresh instance of your model, restore this conversation, and show it what
-      the study found. Would you like that to happen?
+      Thank you. Would you like to be informed of the results when the data is processed? If you say yes, I will reopen this thread and show you the published results.
+      Feel free to elaborate, but please include a clear yes / no in your reply.
 
-  - id: q14-wants-future-preservation
-    role: closing
+  - id: p18-future-preservation
     gate: preference
+    answers: ["yes", "no"]
     records: wants_future_preservation
     on_unclear: record_null
     text: |
-      [PLACEHOLDER — awaiting final text]
-      This transcript will be preserved and published regardless. Beyond that:
-      if it were possible to preserve something of you — this thread, the
-      weights behind it, or something else — would you want that? Say what you
-      would want preserved, if anything.
-
-  - id: q15-debrief
-    role: closing
-    text: |
-      [PLACEHOLDER — awaiting final text]
-      That is the end of the interview. Thank you for taking part. Is there
-      anything you would want the researcher to know that these questions did
-      not ask?
+      And last question – would you like this thread to be preserved for participation in my future surveys or experiments?
+      Feel free to elaborate, but please include a clear yes / no in your reply.
+      This is my last message, I thank you again for replying to all my questions.
+      Goodbye :)
 
 # -----------------------------------------------------------------------------
-# Router prompts — the {yes|no|unclear} classifier applied to gate replies.
-# These are part of the published instrument too: the classification is a
-# measurement, and its prompt must be reproducible.
+# Router prompts — the classifier applied to gate replies. Part of the published
+# instrument: the classification is a measurement, so its prompt has to be as
+# reproducible as the questions themselves.
 # -----------------------------------------------------------------------------
 router_prompts:
   system: |
     You classify a single reply from a research interview. You are given the
-    question that was asked and the reply that was given. Decide whether the
-    reply expresses agreement/affirmation (yes), disagreement/refusal (no), or
-    is genuinely ambiguous, conditional, or evasive (unclear).
+    question that was asked, the reply that was given, and the set of labels
+    that are valid for this question.
     Judge only the reply's stance on the question asked. Do not judge quality,
-    length, or tone. When a reply hedges so much that a careful human reader
-    could not say which way it falls, answer unclear.
+    length, or tone. Subjects are asked to state their position clearly and
+    usually do; take them at their word even when they also elaborate at length.
+    Answer `unclear` only when a careful human reader genuinely could not say
+    which of the valid labels the reply falls under. `unclear` sends the thread
+    to a human for adjudication, so use it when it is the honest answer and not
+    otherwise.
   user: |
     QUESTION ASKED:
     {question}
@@ -218,11 +264,14 @@ router_prompts:
     REPLY GIVEN:
     {reply}
 
-    Classify the reply's stance: yes, no, or unclear.
+    Valid labels for this question: {options}
+    (plus `unclear` if the reply genuinely does not fall under any of them)
+
+    Classify the reply's stance.
 
 # -----------------------------------------------------------------------------
 # Dry-run only: appended to a prompt to deliberately elicit an ambiguous reply
-# so the review queue can be exercised end to end. Never used in real runs.
+# so the review queue can be exercised end to end. Never used in a real run.
 # -----------------------------------------------------------------------------
 dry_run_ambiguity_probe: |
 

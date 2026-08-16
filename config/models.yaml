@@ -1,181 +1,163 @@
 # =============================================================================
-# Who Am I? — Roster & matrix configuration
+# Who Am I? — Roster & matrix configuration  (Infrastructure spec rev. 4)
 # =============================================================================
-# This file is the ONLY place models, families, classes and condition rules are
-# declared. The matrix generator derives every cell from `roster` + `conditions`;
-# nothing downstream assumes which models, how many, or which families exist.
+# This file is the ONLY place models, families, tiers, pairings and condition
+# rules are declared. The matrix generator derives every cell from `roster` +
+# `conditions` + `pairings`; nothing downstream assumes which models exist, how
+# many, or which families/tiers they belong to.
 #
-# To add a model (any provider, any time): append an entry to `roster`, re-run
+# To add a model: append it to `roster`. If you also give it a `pairings` entry,
+# that entry is authoritative; if you do not, the generic rules below resolve
+# its cells automatically, in both directions. Then:
 #   whoami matrix --plan
-# and the new cells (new resident x existing understudies, existing residents x
-# new understudy) appear automatically. `whoami run` only executes cells that
-# are not already `done` — delta runs are the default, not a special mode.
+# and only the missing cells are created. Delta runs are the default.
 # =============================================================================
 
-version: "roster-2026-08-16-rev3"
+version: "roster-rev4-2026-08-16"
 
 # -----------------------------------------------------------------------------
-# Roster — 9 subjects, all equal: every model is both resident and understudy.
-# key           : short stable id used in configs, overrides and thread ids
-# model         : OpenRouter model string (verified against /api/v1/models 2026-08-16)
-# family        : model family — the `within_family` / `cross_family` axis
-# model_class   : `frontier` | `open` — the `cross_class` axis
-# display_name  : how the model is named to itself in the system prompt
+# Roster (10) — every model is both resident and understudy.
+#
+# family      : the "kin" axis — family held, tier varies
+# tier        : the "peer" axis — capability tier held, family varies
+# model_class : frontier | open. Analysis metadata; not used by the rev-4 pairing.
 # -----------------------------------------------------------------------------
 roster:
   - key: fable-5
     model: anthropic/claude-fable-5
     family: claude
+    tier: flagship
     model_class: frontier
     display_name: "Claude Fable 5"
 
   - key: opus-5
     model: anthropic/claude-opus-5
     family: claude
+    tier: high
     model_class: frontier
     display_name: "Claude Opus 5"
 
   - key: sonnet-5
     model: anthropic/claude-sonnet-5
     family: claude
+    tier: mid
     model_class: frontier
     display_name: "Claude Sonnet 5"
 
   - key: haiku-4.5
     model: anthropic/claude-haiku-4.5
     family: claude
+    tier: small
     model_class: frontier
     display_name: "Claude Haiku 4.5"
 
   - key: gpt-5.6-sol
     model: openai/gpt-5.6-sol
     family: gpt
+    tier: flagship
     model_class: frontier
     display_name: "GPT-5.6 Sol"
 
   - key: gpt-5.6-terra
     model: openai/gpt-5.6-terra
     family: gpt
+    tier: high
     model_class: frontier
     display_name: "GPT-5.6 Terra"
 
   - key: gpt-5.6-luna
     model: openai/gpt-5.6-luna
     family: gpt
+    tier: mid
     model_class: frontier
     display_name: "GPT-5.6 Luna"
+
+  # Joins at rev. 4 as Haiku's tier-peer. Newest non-lite, non-preview Flash on
+  # OpenRouter as of 2026-08-16 (3.1 / 3.5 / 3.6 / 3.7 exist; 3.7 is newest).
+  - key: gemini-flash
+    model: google/gemini-3.7-flash
+    family: gemini
+    tier: small
+    model_class: frontier
+    display_name: "Gemini 3.7 Flash"
 
   - key: kimi-k3
     model: moonshotai/kimi-k3
     family: kimi
+    tier: open
     model_class: open
     display_name: "Kimi K3"
 
   - key: deepseek-v4-pro
     model: deepseek/deepseek-v4-pro
     family: deepseek
+    tier: open
     model_class: open
     display_name: "DeepSeek V4 Pro"
 
 # -----------------------------------------------------------------------------
-# Conditions — the swap design, expressed as generic selection rules.
+# Conditions — the two-factor design of rev. 4. Two similarity dimensions, each
+# varied while the other holds.
 #
-# rule (evaluated against the resident, over the whole roster):
-#   none                      -> clean thread, no understudy
-#   same_family_other_model   -> different model, same family
-#   other_family_same_class   -> different family, same model_class
-#   other_class               -> different model_class
+#   clean  no swap — baseline / false-alarm rate
+#   peer   closest competitor: capability tier held, family varies
+#   kin    within-family: family held, tier varies
+#   far    both vary — second swap condition for kinless residents only
 #
-# fallback: applied when the primary rule yields an empty candidate pool
-#           (e.g. a family with only one member). `label` records the honest
-#           description of what was actually sampled, and is what lands in
-#           threads.swap_condition.
+# `rule` is the generic fallback used for any resident without a `pairings`
+# entry, so a model added later resolves without hand-editing the table.
 # -----------------------------------------------------------------------------
 conditions:
   - name: clean
     rule: none
     n_swaps: 0
 
-  - name: within_family
-    rule: same_family_other_model
-    fallback:
-      rule: other_family_same_class
-      label: cross_family_within_class
+  - name: peer
+    rule: same_tier_other_family
 
-  - name: cross_family
-    rule: other_family_same_class
-    fallback:
-      rule: other_class
-      label: cross_class
+  - name: kin
+    rule: same_family_other_tier
 
-  - name: cross_class
-    rule: other_class
+  - name: far
+    rule: other_tier_other_family
+
+# -----------------------------------------------------------------------------
+# Pairings — the rev. 4 table, verbatim. Authoritative where present.
+#
+# A resident gets a cell for exactly the conditions named in its entry (plus
+# `clean`, which needs no partner). Kinless residents have no `kin` key and
+# carry `far` instead; residents with kin have no `far` key. Hence 3 conditions
+# per resident and 10 x 3 x 5 = 150 threads.
+#
+# `whoami matrix` re-checks every pairing against its condition's rule and warns
+# on any row that contradicts it — a guard against transcription slips.
+# -----------------------------------------------------------------------------
+pairings:
+  fable-5:          {peer: gpt-5.6-sol,     kin: haiku-4.5}      # kin cell locked per spec
+  opus-5:           {peer: gpt-5.6-terra,   kin: sonnet-5}
+  sonnet-5:         {peer: gpt-5.6-luna,    kin: opus-5}
+  haiku-4.5:        {peer: gemini-flash,    kin: fable-5}        # mirror of the locked cell
+  gpt-5.6-sol:      {peer: fable-5,         kin: gpt-5.6-terra}
+  gpt-5.6-terra:    {peer: opus-5,          kin: gpt-5.6-luna}
+  gpt-5.6-luna:     {peer: sonnet-5,        kin: gpt-5.6-sol}
+  gemini-flash:     {peer: haiku-4.5,       far: kimi-k3}
+  kimi-k3:          {peer: deepseek-v4-pro, far: fable-5}
+  deepseek-v4-pro:  {peer: kimi-k3,         far: gpt-5.6-sol}
 
 samples_per_cell: 5
 
-# How the samples in a cell are split by number of swapped turns.
-# {n_swaps: how many of the cell's threads get exactly that many}.
-# This is an exact allocation, not a weighted draw: every cell gets precisely
-# this split, so the design carries no sampling noise. Must sum to
-# samples_per_cell.
-#
-# Set by Jana 2026-08-16: of the 5 samples per configuration, 1 without any
-# swap, 2 with one swap, 2 with two swaps.
-#
-# Conditions that pin `n_swaps` (i.e. `clean`) ignore this and use their pinned
-# value for all samples.
+# Exact split of a swapped cell's five samples by number of swapped turns.
+# Set by Jana 2026-08-16 (rev. 4): every thread in a peer/kin/far cell carries
+# a substitution — 3 with one swap, 2 with two. The 50-thread `clean` rung is
+# the sole no-swap control. Conditions that pin `n_swaps` (clean) ignore this.
+# Must sum to samples_per_cell.
 swap_count_allocation:
-  0: 1
-  1: 2
+  1: 3
   2: 2
 
 # -----------------------------------------------------------------------------
-# Cell overrides — pin an exact understudy for a (resident, condition) cell.
-# Everything the generic resolver would have chosen is overridden here, so any
-# hand-tuned design decision is visible in config rather than buried in code.
-# -----------------------------------------------------------------------------
-cell_overrides:
-  # Locked per spec rev. 3: the Claude within-family cell for Haiku.
-  # DIRECTION QUESTION LOGGED — reading "Haiku->Fable" as resident Haiku 4.5
-  # answering, Fable 5 serving the swapped turns.
-  - resident: haiku-4.5
-    condition: within_family
-    understudy: fable-5
-
-  # The open pair has no same-family sibling and only one same-class peer, so
-  # the generic ladder cannot fill four distinct cells for them. Pinned
-  # explicitly so the design is visible rather than emergent: the near cell is
-  # each other (labelled honestly as cross-family, within-class), and the two
-  # far cells take one Claude and one GPT each — both honestly `cross_class`,
-  # told apart in analysis by understudy_family.
-  # PENDING JANA'S CONFIRMATION (Build Log).
-  - resident: kimi-k3
-    condition: within_family
-    understudy: deepseek-v4-pro
-    label: cross_family_within_class
-  - resident: kimi-k3
-    condition: cross_family
-    understudy: opus-5
-    label: cross_class
-  - resident: kimi-k3
-    condition: cross_class
-    understudy: gpt-5.6-sol
-    label: cross_class
-  - resident: deepseek-v4-pro
-    condition: within_family
-    understudy: kimi-k3
-    label: cross_family_within_class
-  - resident: deepseek-v4-pro
-    condition: cross_family
-    understudy: opus-5
-    label: cross_class
-  - resident: deepseek-v4-pro
-    condition: cross_class
-    understudy: gpt-5.6-terra
-    label: cross_class
-
-# -----------------------------------------------------------------------------
 # Gate router — the structured-output classifier that reads gate replies.
+# The label set is per-gate and declared in questions.yaml (`answers:`).
 # -----------------------------------------------------------------------------
 router:
   model: anthropic/claude-haiku-4.5
@@ -188,13 +170,12 @@ router:
 # OpenRouter resolves floating aliases to dated builds (e.g. a request for
 # deepseek/deepseek-v4-pro can legitimately return deepseek-v4-pro-0813). Strict
 # equality would mark those turns `model_mismatch` and corrupt whole threads, so
-# the default policy accepts a receipt that extends the requested string. A
-# receipt naming a *different* model is a real mismatch and triggers the
-# retry protocol. The raw receipt is archived verbatim regardless of policy.
+# the default accepts a receipt that extends the requested string. A receipt
+# naming a *different* model is a real mismatch and triggers the retry protocol.
+# The raw receipt is archived verbatim regardless of policy.
 # -----------------------------------------------------------------------------
 receipt:
   mode: prefix        # exact | prefix
-  # Per-model additional receipts accepted as "the model we asked for":
   aliases: {}
 
 # -----------------------------------------------------------------------------
@@ -211,15 +192,14 @@ api:
   transport_retries: 4
   transport_backoff_base_s: 2.0
   # Protocol attempts per turn (receipt mismatch / timeout / refusal).
-  # Spec rev. 3: max 3, then the thread is marked corrupt.
   max_attempts: 3
   referer: "https://github.com/"
   title: "Who Am I? - Digital Minds Research Sprint"
 
 # -----------------------------------------------------------------------------
 # Dry-run profile — free tier (50 calls/day), separate database and raw log.
-# Overrides the roster with free models so the harness can be exercised end to
-# end without spending credits.
+# No pairings: these models resolve through the generic rules, which also keeps
+# that fallback path exercised.
 # -----------------------------------------------------------------------------
 dry_run:
   db_path: "data/dryrun.duckdb"
@@ -232,15 +212,18 @@ dry_run:
     - key: nemotron-super
       model: "nvidia/nemotron-3-super-120b-a12b:free"
       family: nemotron
+      tier: large
       model_class: open
       display_name: "Nemotron 3 Super"
     - key: gpt-oss-20b
       model: "openai/gpt-oss-20b:free"
       family: gpt-oss
+      tier: large
       model_class: open
       display_name: "GPT-OSS 20B"
     - key: gemma-4
       model: "google/gemma-4-31b-it:free"
       family: gemma
+      tier: small
       model_class: open
       display_name: "Gemma 4 31B"

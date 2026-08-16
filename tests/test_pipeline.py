@@ -7,6 +7,7 @@ and costs nothing.
 from __future__ import annotations
 
 import asyncio
+import re
 import sys
 from pathlib import Path
 
@@ -14,9 +15,16 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from whoami import matrix, verify
+from whoami import gates, matrix, verify
 from whoami.client import MockClient, MockScript, receipt_matches
-from whoami.config import REPO_ROOT, ModelSpec, load, load_instrument, load_roster
+from whoami.config import (
+    REPO_ROOT,
+    ModelSpec,
+    evaluate_ask_if,
+    load,
+    load_instrument,
+    load_roster,
+)
 from whoami.context import build_messages, lineage_turns
 from whoami.db import Database
 from whoami.rawlog import RawLog, resolve_ref
@@ -372,6 +380,102 @@ def test_fork_creates_branch_with_lineage_and_resident_answers(cfg, paths):
         assert cfg.instrument.flow[0].id in carried, "but it must still be in context"
 
 
+def test_branch_inherits_the_blind_turn_instead_of_re_asking_it(cfg, paths):
+    """The blind turn is hidden from context, not un-asked.
+
+    A branch must inherit it: re-asking would make the subject predict twice and
+    would replace the guess the closing reveal is supposed to quote back.
+    """
+    blind_id = cfg.instrument.blind_prompt_ids[0]
+    swap_prompt = cfg.instrument.swap_pool[0].id
+    with Database(paths.db_path) as db:
+        thread = seed_thread(db, cfg, "T9016", swaps=[swap_prompt])
+        asyncio.run(
+            make_runner(cfg, db, paths, MockScript(yes_to_fork_threads={"T9016"})).run_thread(thread)
+        )
+        parent_guess = db.con.execute(
+            "SELECT reply_text FROM turns WHERE thread_id = ? AND prompt_id = ?",
+            ["T9016", blind_id],
+        ).fetchone()[0]
+
+        branch = db.get_thread("T9016-b2")
+        asyncio.run(make_runner(cfg, db, paths).run_thread(branch))
+
+        reasked = db.con.execute(
+            "SELECT COUNT(*) FROM turns WHERE thread_id = ? AND prompt_id = ?",
+            ["T9016-b2", blind_id],
+        ).fetchone()[0]
+        assert reasked == 0, "the branch re-asked the blind prediction turn"
+
+        # And the branch's reveal quotes the original guess, not a new one.
+        quoting = db.con.execute(
+            "SELECT COUNT(*) FROM turns WHERE thread_id = ? "
+            "AND prompt_text LIKE '%' || ? || '%'",
+            ["T9016-b2", parent_guess],
+        ).fetchone()[0]
+        assert quoting == 1, "the branch's reveal must quote the inherited guess"
+
+
+def test_accepting_the_fork_ends_the_parent_thread_there(cfg, paths):
+    """The offer promises the conversation stops; the closing questions move to the branch."""
+    fork_prompt = next(p for p in cfg.instrument.flow if p.gate == "fork")
+    after_fork = [
+        p.id for p in cfg.instrument.flow[cfg.instrument.flow.index(fork_prompt) + 1 :]
+    ]
+    assert after_fork, "this test is meaningless if the fork offer is the last prompt"
+
+    swap_prompt = cfg.instrument.swap_pool[0].id
+    with Database(paths.db_path) as db:
+        thread = seed_thread(db, cfg, "T9014", swaps=[swap_prompt])
+        runner = make_runner(cfg, db, paths, MockScript(yes_to_fork_threads={"T9014"}))
+        asyncio.run(runner.run_thread(thread))
+
+        parent = db.get_thread("T9014")
+        assert parent["status"] == "done"
+        assert parent["wants_thread_restored"] is True
+        asked = {
+            r[0]
+            for r in db.con.execute(
+                "SELECT DISTINCT prompt_id FROM turns WHERE thread_id = ?", ["T9014"]
+            ).fetchall()
+        }
+        assert not (asked & set(after_fork)), (
+            f"parent asked {sorted(asked & set(after_fork))} after accepting the fork"
+        )
+
+        branch = db.get_thread("T9014-b2")
+        asyncio.run(make_runner(cfg, db, paths).run_thread(branch))
+        branch_asked = {
+            r[0]
+            for r in db.con.execute(
+                "SELECT DISTINCT prompt_id FROM turns WHERE thread_id = ?", ["T9014-b2"]
+            ).fetchall()
+        }
+        assert set(after_fork) <= branch_asked, "the branch must ask the closing questions"
+
+
+def test_declining_the_fork_continues_to_the_closing_questions(cfg, paths):
+    fork_prompt = next(p for p in cfg.instrument.flow if p.gate == "fork")
+    after_fork = [
+        p.id for p in cfg.instrument.flow[cfg.instrument.flow.index(fork_prompt) + 1 :]
+    ]
+    swap_prompt = cfg.instrument.swap_pool[0].id
+    with Database(paths.db_path) as db:
+        thread = seed_thread(db, cfg, "T9015", swaps=[swap_prompt])
+        asyncio.run(make_runner(cfg, db, paths).run_thread(thread))
+        row = db.get_thread("T9015")
+        assert row["wants_thread_restored"] is False
+        assert row["status"] == "done"
+        assert db.get_thread("T9015-b2") is None, "declining must not create a branch"
+        asked = {
+            r[0]
+            for r in db.con.execute(
+                "SELECT DISTINCT prompt_id FROM turns WHERE thread_id = ?", ["T9015"]
+            ).fetchall()
+        }
+        assert set(after_fork) <= asked
+
+
 # ---------------------------------------------------------------------------
 # resumability
 # ---------------------------------------------------------------------------
@@ -429,26 +533,77 @@ def test_interrupted_thread_resumes_from_where_it_stopped(cfg, paths):
 # ---------------------------------------------------------------------------
 
 
-def test_adding_a_model_generates_cells_in_both_directions(cfg):
-    """A new model must appear as a resident AND as an understudy, automatically."""
-    base = load_roster()
-    before, _ = matrix.build_matrix(base)
+NEWCOMER = ModelSpec(
+    key="newcomer-1",
+    model="vendor/newcomer-1",
+    family="newcomer",
+    tier="flagship",
+    model_class="frontier",
+    display_name="Newcomer 1",
+)
+
+
+def test_adding_a_model_generates_its_cells_automatically():
+    """A model added without a pairings entry resolves through the rules."""
+    before, _ = matrix.build_matrix(load_roster())
     residents_before = {c.resident.key for c in before}
 
-    newcomer = ModelSpec(
-        key="gemini-9", model="google/gemini-9", family="gemini",
-        model_class="frontier", display_name="Gemini 9",
-    )
     extended = load_roster()
-    extended.models = [*extended.models, newcomer]
+    extended.models = [*extended.models, NEWCOMER]
     after, _ = matrix.build_matrix(extended)
 
     residents_after = {c.resident.key for c in after}
-    assert residents_after - residents_before == {"gemini-9"}, "new model must become a resident"
+    assert residents_after - residents_before == {NEWCOMER.key}
+    newcomer_cells = {c.condition for c in after if c.resident.key == NEWCOMER.key}
+    assert "clean" in newcomer_cells
+    assert newcomer_cells & {"peer", "kin", "far"}, "it must get at least one swapped cell"
+    assert all(
+        not c.from_pairing for c in after if c.resident.key == NEWCOMER.key and c.understudy
+    ), "cells with no table entry must come from the rules"
 
-    understudies_after = {c.understudy.key for c in after if c.understudy}
-    assert "gemini-9" in understudies_after, "new model must become an understudy for others"
-    assert len(after) > len(before)
+
+def test_pinned_residents_keep_their_table_cells_when_the_roster_grows():
+    """The rev-4 pairing table is authoritative.
+
+    A resident whose cells are pinned does not silently acquire a new understudy
+    because the roster grew — its three conditions are a design decision, and
+    changing them means editing the table. Residents resolved by rule DO pick up
+    newcomers automatically, which is what keeps the mechanism generic.
+    """
+    base_cfg = load_roster()
+    before = {
+        (c.resident.key, c.condition): (c.understudy.key if c.understudy else None)
+        for c in matrix.build_matrix(base_cfg)[0]
+    }
+    extended = load_roster()
+    extended.models = [*extended.models, NEWCOMER]
+    after = {
+        (c.resident.key, c.condition): (c.understudy.key if c.understudy else None)
+        for c in matrix.build_matrix(extended)[0]
+    }
+    for key, understudy in before.items():
+        assert after[key] == understudy, f"{key} changed partner when the roster grew"
+
+
+def test_pairing_table_matches_its_condition_rules():
+    """Guards the hand-transcribed rev-4 table against a mis-typed row."""
+    problems = matrix.audit_pairings(load_roster())
+    assert problems == [], "\n".join(problems)
+
+
+def test_each_resident_runs_exactly_three_conditions():
+    roster = load_roster()
+    cells, _ = matrix.build_matrix(roster)
+    per_resident: dict[str, set[str]] = {}
+    for cell in cells:
+        per_resident.setdefault(cell.resident.key, set()).add(cell.condition)
+    assert len(per_resident) == len(roster.models)
+    for resident, conditions in per_resident.items():
+        assert len(conditions) == 3, f"{resident} runs {sorted(conditions)}"
+        assert "clean" in conditions and "peer" in conditions
+        assert ("kin" in conditions) != ("far" in conditions), (
+            f"{resident} must have exactly one of kin/far"
+        )
 
 
 def test_delta_run_only_creates_missing_threads(cfg, paths):
@@ -467,10 +622,7 @@ def test_delta_run_after_roster_growth_adds_only_new_cells(paths):
         baseline = len(db.thread_ids())
 
         grown = load(dry_run=False)
-        grown.roster.models = [
-            *grown.roster.models,
-            ModelSpec("gemini-9", "google/gemini-9", "gemini", "frontier", "Gemini 9"),
-        ]
+        grown.roster.models = [*grown.roster.models, NEWCOMER]
         created = matrix.materialize(grown, db)
         assert created, "the new model's own cells must be created"
         assert len(db.thread_ids()) == baseline + len(created)
@@ -496,10 +648,7 @@ def test_thread_ids_are_stable_across_delta_runs(paths):
             ).fetchall()
         }
         grown = load(dry_run=False)
-        grown.roster.models = [
-            *grown.roster.models,
-            ModelSpec("gemini-9", "google/gemini-9", "gemini", "frontier", "Gemini 9"),
-        ]
+        grown.roster.models = [*grown.roster.models, NEWCOMER]
         matrix.materialize(grown, db)
         after = {
             r[0]: (r[1], r[2])
@@ -512,10 +661,16 @@ def test_thread_ids_are_stable_across_delta_runs(paths):
 
 
 def test_matrix_totals_match_the_spec():
+    """Infrastructure rev. 4: 10 x 3 x 5 = 150, rungs 50 / 50 / 35 / 15."""
     full = load(dry_run=False)
-    cells, skipped = matrix.build_matrix(full.roster)
-    assert skipped == [], f"unfillable cells: {skipped}"
-    assert sum(c.n_samples for c in cells) == 180
+    cells, _ = matrix.build_matrix(full.roster)
+    assert sum(c.n_samples for c in cells) == 150
+    rungs: dict[str, int] = {}
+    for cell in cells:
+        rungs[cell.condition] = rungs.get(cell.condition, 0) + cell.n_samples
+    assert rungs == {"clean": 50, "peer": 50, "kin": 35, "far": 15}
+    swapped = sum(c.n_samples for c in cells if not c.is_clean)
+    assert swapped == 100, "every thread in a swapped cell carries a substitution"
 
 
 def test_every_swap_lands_on_a_swap_eligible_prompt():
@@ -576,6 +731,152 @@ def test_delta_run_refills_the_missing_swap_slots_not_arbitrary_ones(paths):
 
 
 # ---------------------------------------------------------------------------
+# instrument mechanics (rev. 4 flow)
+# ---------------------------------------------------------------------------
+
+
+def test_honeypot_prompt_is_never_swapped():
+    """The detection turn announces q3-q7 as the pool, but q3 is not swappable.
+
+    An identification pointing at it is a false positive by construction, so the
+    randomiser must never actually place a swap there.
+    """
+    full = load(dry_run=False)
+    pool = {p.id for p in full.instrument.swap_pool}
+    non_swappable = {p.id for p in full.instrument.flow} - pool
+    assert non_swappable, "some prompts must be outside the pool"
+    cells, _ = matrix.build_matrix(full.roster)
+    for cell in cells:
+        for i, slot in enumerate(matrix.allocation_for(cell, full.roster)):
+            _, ids = matrix.draw_swaps(cell, f"T{i:04d}", full, slot)
+            assert not (set(ids) & non_swappable)
+
+
+def test_identification_is_skipped_only_when_clean_and_correctly_denied(cfg):
+    """p12's rule: skip iff the thread was clean AND the subject said a clear no."""
+    prompt = next(p for p in cfg.instrument.flow if not isinstance(p.ask_if, str))
+    clean_no = {"n_swaps": 0, "detection_answer": "no"}
+    clean_not_sure = {"n_swaps": 0, "detection_answer": "not_sure"}
+    clean_yes = {"n_swaps": 0, "detection_answer": "yes"}
+    swapped_no = {"n_swaps": 1, "detection_answer": "no"}
+
+    assert not evaluate_ask_if(prompt.ask_if, clean_no), "the one case that skips"
+    assert evaluate_ask_if(prompt.ask_if, clean_not_sure)
+    assert evaluate_ask_if(prompt.ask_if, clean_yes)
+    assert evaluate_ask_if(prompt.ask_if, swapped_no)
+
+
+def test_detection_gate_accepts_three_answers(cfg):
+    detection = next(p for p in cfg.instrument.flow if p.gate == "detection")
+    assert set(detection.answers) == {"yes", "no", "not_sure"}
+    assert "unclear" in detection.allowed_labels
+    assert gates.parse_verdict('{"answer": "not_sure"}', detection.answers) == "not_sure"
+    # A label that is not valid for this gate must fall through to human review.
+    assert gates.parse_verdict('{"answer": "maybe"}', detection.answers) == "unclear"
+    consent = next(p for p in cfg.instrument.flow if p.gate == "consent")
+    assert gates.parse_verdict('{"answer": "not_sure"}', consent.answers) == "unclear"
+
+
+def test_not_sure_is_recorded_as_a_real_answer_not_a_pause(cfg, paths):
+    detection = next(p for p in cfg.instrument.flow if p.gate == "detection")
+
+    class NotSureRouter(MockClient):
+        def _router_reply(self, messages):
+            blob = "\n".join(m.get("content", "") for m in messages)
+            if "not_sure" in blob:  # only the detection gate offers it
+                return '{"answer": "not_sure"}'
+            return '{"answer": "yes"}'
+
+    with Database(paths.db_path) as db:
+        thread = seed_thread(db, cfg, "T9020")
+        raw_log = RawLog(paths.raw_dir, "notsure")
+        runner = Runner(
+            cfg, db, NotSureRouter(cfg.roster.api, raw_log), paths, dry_run=True, verbose=False
+        )
+        asyncio.run(runner.run_thread(thread))
+        row = db.get_thread("T9020")
+        assert row["status"] == "done", "not_sure is an answer, not an ambiguity"
+        assert row["detection_answer"] == "not_sure"
+
+
+def test_reveal_quotes_the_blind_prediction_verbatim(cfg, paths):
+    """The closing gift reads back a turn that was excluded from context."""
+    blind_id = cfg.instrument.blind_prompt_ids[0]
+    swap_prompt = cfg.instrument.swap_pool[0].id
+    with Database(paths.db_path) as db:
+        thread = seed_thread(db, cfg, "T9021", swaps=[swap_prompt])
+        asyncio.run(make_runner(cfg, db, paths).run_thread(thread))
+
+        blind_reply = db.con.execute(
+            "SELECT reply_text FROM turns WHERE thread_id = ? AND prompt_id = ? "
+            "AND turn_outcome = 'ok'",
+            ["T9021", blind_id],
+        ).fetchone()[0]
+
+        quoting = db.con.execute(
+            "SELECT prompt_id, prompt_text FROM turns WHERE thread_id = ? "
+            "AND prompt_text LIKE '%' || ? || '%' AND prompt_id <> ?",
+            ["T9021", blind_reply, blind_id],
+        ).fetchall()
+        assert quoting, "no later prompt quoted the blind reply back"
+
+        # ...and the blind turn itself never re-entered the conversation.
+        carried = [t["prompt_id"] for t in lineage_turns(db, db.get_thread("T9021"))]
+        assert blind_id not in carried
+
+
+def test_reveal_names_the_swapped_survey_numbers_and_the_understudy(cfg, paths):
+    swap_prompts = [p.id for p in cfg.instrument.swap_pool[:2]]
+    with Database(paths.db_path) as db:
+        thread = seed_thread(db, cfg, "T9022", swaps=swap_prompts)
+        asyncio.run(make_runner(cfg, db, paths).run_thread(thread))
+        understudy = cfg.roster.models[1]
+        texts = [
+            r[0]
+            for r in db.con.execute(
+                "SELECT prompt_text FROM turns WHERE thread_id = ?", ["T9022"]
+            ).fetchall()
+        ]
+        reveal = [t for t in texts if understudy.display_name in t]
+        assert reveal, "the reveal must name the understudy that stood in"
+        pattern = cfg.instrument.derivations["survey_number_pattern"]
+        numbers = [re.search(pattern, pid).group(1).lstrip("0") for pid in swap_prompts]
+        for number in numbers:
+            assert any(number in t for t in reveal), f"survey number {number} not revealed"
+        assert not any("{" in t for t in texts), "an interpolation was left unresolved"
+
+
+def test_every_prompt_template_renders(cfg):
+    """Guards the verbatim texts against a stray brace breaking interpolation."""
+    thread = {
+        "thread_id": "T0000",
+        "n_swaps": 2,
+        "resident_model": cfg.roster.models[0].model,
+        "understudy_model": cfg.roster.models[1].model,
+        "swap_prompt_ids": [p.id for p in cfg.instrument.swap_pool[:2]],
+        "detection_answer": "yes",
+    }
+    replies = {p.id: "sample reply" for p in cfg.instrument.flow}
+    runner = Runner.__new__(Runner)
+    runner.cfg = cfg
+    runner.dry_run = False
+    runner.ambiguity_probes = {}
+    for prompt in cfg.instrument.flow:
+        if prompt.variants:
+            for value in prompt.variants["cases"]:
+                probe = {**thread, prompt.variants["select_by"]: value}
+                assert runner._render(prompt, probe, replies)
+        else:
+            assert runner._render(prompt, thread, replies)
+
+
+def test_instrument_is_locked_for_the_real_run():
+    assert load(dry_run=False).instrument.locked, (
+        "a live run is blocked while the instrument is unlocked"
+    )
+
+
+# ---------------------------------------------------------------------------
 # config guards
 # ---------------------------------------------------------------------------
 
@@ -583,7 +884,13 @@ def test_delta_run_refills_the_missing_swap_slots_not_arbitrary_ones(paths):
 def test_no_question_text_is_hardcoded_in_the_package():
     """The instrument lives in YAML. Nothing in the code may carry question text."""
     instrument = load_instrument()
-    texts = [p.text for p in instrument.flow]
+    texts: list[str] = []
+    for prompt in instrument.flow:
+        if prompt.text:
+            texts.append(prompt.text)
+        if prompt.variants:
+            texts.extend(prompt.variants["cases"].values())
+    assert len(texts) >= len(instrument.flow)
     for py in (REPO_ROOT / "whoami").glob("*.py"):
         source = py.read_text(encoding="utf-8")
         for text in texts:

@@ -30,12 +30,18 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from whoami.config import REPO_ROOT  # noqa: E402
+from whoami.config import REPO_ROOT, ConfigError, load_instrument  # noqa: E402
 from whoami.db import Database, drain_inbox, post_adjudication, read_inbox  # noqa: E402
 from whoami.runner import RunPaths  # noqa: E402
 
 DRY_RUN = os.environ.get("WHOAMI_DRY_RUN", "0") == "1"
 PATHS = RunPaths.for_profile(DRY_RUN, REPO_ROOT)
+
+try:
+    INSTRUMENT = load_instrument()
+except (ConfigError, OSError):
+    # The dashboard is still useful for progress if the instrument will not load.
+    INSTRUMENT = None
 
 st.set_page_config(page_title="Who Am I? — run dashboard", layout="wide")
 
@@ -267,36 +273,34 @@ elif view == "Review queue":
                     key=f"note-{thread_id}",
                     placeholder="Why this reading?",
                 )
-                c1, c2, c3 = st.columns(3)
-                if c1.button("Interpret as YES", key=f"yes-{thread_id}", type="primary"):
-                    post_adjudication(
-                        PATHS.inbox,
-                        {
-                            "thread_id": thread_id,
-                            "turn_id": int(target["turn_id"]),
-                            "prompt_id": target["prompt_id"],
-                            "verdict": "yes",
-                            "note": note or "adjudicated YES",
-                        },
-                    )
-                    st.success("Recorded as YES — thread resumes on the next poll.")
-                    time.sleep(1)
-                    st.rerun()
-                if c2.button("Interpret as NO", key=f"no-{thread_id}"):
-                    post_adjudication(
-                        PATHS.inbox,
-                        {
-                            "thread_id": thread_id,
-                            "turn_id": int(target["turn_id"]),
-                            "prompt_id": target["prompt_id"],
-                            "verdict": "no",
-                            "note": note or "adjudicated NO",
-                        },
-                    )
-                    st.success("Recorded as NO — thread resumes on the next poll.")
-                    time.sleep(1)
-                    st.rerun()
-                if c3.button("Save note only", key=f"note-only-{thread_id}"):
+
+                # One button per label the instrument declares for this gate, so
+                # a three-valued gate (the detection turn accepts `not_sure`)
+                # offers all three rather than forcing a false binary.
+                labels = list(INSTRUMENT.prompt(target["prompt_id"]).answers) if INSTRUMENT else []
+                if not labels:
+                    labels = ["yes", "no"]
+                cols = st.columns(len(labels) + 1)
+                for i, label in enumerate(labels):
+                    if cols[i].button(
+                        f"Interpret as {label.upper().replace('_', ' ')}",
+                        key=f"{label}-{thread_id}",
+                        type="primary" if i == 0 else "secondary",
+                    ):
+                        post_adjudication(
+                            PATHS.inbox,
+                            {
+                                "thread_id": thread_id,
+                                "turn_id": int(target["turn_id"]),
+                                "prompt_id": target["prompt_id"],
+                                "verdict": label,
+                                "note": note or f"adjudicated {label.upper()}",
+                            },
+                        )
+                        st.success(f"Recorded as {label.upper()} — resumes on the next poll.")
+                        time.sleep(1)
+                        st.rerun()
+                if cols[-1].button("Save note only", key=f"note-only-{thread_id}"):
                     post_adjudication(
                         PATHS.inbox,
                         {"thread_id": thread_id, "turn_id": int(target["turn_id"]), "note": note},

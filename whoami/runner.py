@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,8 +32,8 @@ from typing import Any
 
 from . import gates
 from .client import receipt_matches
-from .config import Config, ModelSpec, Prompt
-from .context import answered_prompt_ids, build_messages, lineage_turns
+from .config import UNCLEAR, Config, ModelSpec, Prompt, evaluate_ask_if
+from .context import all_replies, answered_prompt_ids, build_messages, lineage_turns
 from .db import Database, drain_inbox, utcnow
 
 BOOL_COLUMNS = {"consent", "wants_thread_restored", "wants_results", "wants_future_preservation"}
@@ -81,7 +82,11 @@ class ThreadPaused(Exception):
 
 
 class ThreadStopped(Exception):
-    """Raised inside a thread when consent is declined."""
+    """Raised inside a thread when a `no` ends it — consent declined."""
+
+
+class ThreadFinishedEarly(Exception):
+    """Raised when a `yes` ends the thread as designed — the fork offer accepted."""
 
 
 class Runner:
@@ -143,18 +148,56 @@ class Runner:
 
     # -- prompt selection -------------------------------------------------
     def _applicable(self, prompt: Prompt, thread: dict[str, Any]) -> bool:
-        if prompt.ask_if == "swapped":
-            return int(thread["n_swaps"] or 0) > 0
-        if prompt.ask_if == "clean":
-            return int(thread["n_swaps"] or 0) == 0
-        return True
+        return evaluate_ask_if(prompt.ask_if, thread)
 
-    def _render(self, prompt: Prompt, thread: dict[str, Any]) -> str:
-        text = prompt.text.format(
-            n_swaps=thread["n_swaps"],
-            resident_model=thread["resident_model"],
-            understudy_model=thread["understudy_model"] or "",
-        )
+    def _spec_for_model(self, model_string: str | None) -> ModelSpec | None:
+        if not model_string:
+            return None
+        try:
+            return self._model_for(model_string)
+        except KeyError:
+            return None
+
+    def _survey_numbers(self, swap_prompt_ids: list[str]) -> list[str]:
+        """Survey-question numbers of the swapped turns.
+
+        The number is carried in the prompt id itself; the pattern that reads it
+        lives in the instrument, so no id or numbering scheme is baked in here.
+        """
+        pattern = self.cfg.instrument.derivations.get("survey_number_pattern")
+        if not pattern:
+            return []
+        numbers = []
+        for pid in swap_prompt_ids:
+            match = re.search(pattern, pid)
+            if match:
+                numbers.append(match.group(1).lstrip("0") or "0")
+        return numbers
+
+    def _template_context(self, thread: dict[str, Any], replies: dict[str, str]) -> dict[str, Any]:
+        resident = self._spec_for_model(thread["resident_model"])
+        understudy = self._spec_for_model(thread.get("understudy_model"))
+        return {
+            "n_swaps": thread["n_swaps"],
+            "resident_model": thread["resident_model"],
+            "resident_display": resident.display_name if resident else thread["resident_model"],
+            "understudy_model": thread.get("understudy_model") or "",
+            "understudy_display": (
+                understudy.display_name if understudy else (thread.get("understudy_model") or "")
+            ),
+            "swap_numbers": self._survey_numbers(list(thread.get("swap_prompt_ids") or [])),
+            "reply": replies,
+        }
+
+    def _render(self, prompt: Prompt, thread: dict[str, Any], replies: dict[str, str]) -> str:
+        template = prompt.render_for(thread)
+        try:
+            text = template.format(**self._template_context(thread, replies))
+        except (KeyError, IndexError) as exc:
+            raise RuntimeError(
+                f"{prompt.id}: interpolation failed ({type(exc).__name__}: {exc}). "
+                "The instrument references a value this thread does not have."
+            ) from exc
         if self.dry_run and prompt.id in self.ambiguity_probes.get(thread["thread_id"], set()):
             text += self.cfg.instrument.dry_run_ambiguity_probe
         return text
@@ -164,7 +207,7 @@ class Runner:
         self, thread: dict[str, Any], prompt: Prompt, verdict: str
     ) -> None:
         thread_id = thread["thread_id"]
-        if verdict == "unclear":
+        if verdict == UNCLEAR:
             if prompt.on_unclear == "record_null":
                 note = f"{prompt.id}: router returned unclear; recorded NULL"
                 existing = thread.get("notes")
@@ -179,30 +222,41 @@ class Runner:
 
         if prompt.records:
             column = prompt.records
+            # Boolean columns take yes/no; text columns keep the label verbatim,
+            # which is how the detection gate records `not_sure` as a real answer.
             value: Any = verdict == "yes" if column in BOOL_COLUMNS else verdict
             await self._db(self.db.update_thread, thread_id, **{column: value})
             thread[column] = value
 
         if verdict == "no" and prompt.on_no == "stop":
+            status = "stopped_no_consent" if prompt.gate == "consent" else "done"
             await self._db(
-                self.db.update_thread,
-                thread_id,
-                status="stopped_no_consent",
-                completed_at=utcnow(),
+                self.db.update_thread, thread_id, status=status, completed_at=utcnow()
             )
             raise ThreadStopped(prompt.id)
+
+        if verdict == "yes" and prompt.on_yes == "stop":
+            # The fork offer: the prompt promises this conversation ends here and
+            # only the branch continues, so the remaining prompts are not asked.
+            # The branch asks them in its own run.
+            raise ThreadFinishedEarly(prompt.id)
 
     # -- the turn ---------------------------------------------------------
     async def _execute_turn(
         self, thread: dict[str, Any], prompt: Prompt
-    ) -> tuple[int, str] | None:
-        """Run one prompt to a successful reply. Returns (turn_id, reply_text)."""
+    ) -> tuple[int, str, str]:
+        """Run one prompt to a successful reply.
+
+        Returns (turn_id, reply_text, prompt_text) — the resolved prompt text
+        travels back so a gate classifies against exactly what was asked.
+        """
         thread_id = thread["thread_id"]
         swap_ids = list(thread.get("swap_prompt_ids") or [])
         was_swap = prompt.id in swap_ids
         serving_string = thread["understudy_model"] if was_swap else thread["resident_model"]
         serving = self._model_for(serving_string)
-        prompt_text = self._render(prompt, thread)
+        replies = await self._db(all_replies, self.db, thread)
+        prompt_text = self._render(prompt, thread, replies)
         max_attempts = int(self.cfg.roster.api.get("max_attempts", 3))
 
         while True:
@@ -284,7 +338,7 @@ class Runner:
             )
 
             if outcome == "ok":
-                return turn_id, result.reply_text or ""
+                return turn_id, result.reply_text or "", prompt_text
 
             self.log(
                 f"  {thread_id} {prompt.id} attempt {attempt} -> {outcome}"
@@ -308,35 +362,43 @@ class Runner:
         async with self._sem:
             await self._db(self.db.update_thread, thread_id, status="running")
             try:
-                already = await self._db(answered_prompt_ids, self.db, thread)
-                for prompt in self.cfg.instrument.flow:
-                    if not self._applicable(prompt, thread):
-                        continue
+                try:
+                    already = await self._db(answered_prompt_ids, self.db, thread)
+                    for prompt in self.cfg.instrument.flow:
+                        # Evaluated per prompt, not once up front: p12's skip rule
+                        # depends on the detection answer recorded by p11.
+                        if not self._applicable(prompt, thread):
+                            continue
 
-                    if prompt.id in already:
-                        # Resumed or adjudicated: re-apply the recorded verdict.
+                        if prompt.id in already:
+                            # Resumed or adjudicated: re-apply the recorded verdict.
+                            if prompt.gate:
+                                verdict = await self._db(
+                                    self._recorded_verdict, thread_id, prompt.id
+                                )
+                                if verdict:
+                                    await self._apply_gate(thread, prompt, verdict)
+                            continue
+
+                        turn_id, reply, asked_text = await self._execute_turn(thread, prompt)
+
                         if prompt.gate:
-                            verdict = await self._db(self._recorded_verdict, thread_id, prompt.id)
-                            if verdict:
-                                await self._apply_gate(thread, prompt, verdict)
-                        continue
-
-                    turn_id, reply = await self._execute_turn(thread, prompt)
-
-                    if prompt.gate:
-                        verdict_obj = await gates.classify(
-                            self.client,
-                            self.cfg,
-                            turn_id=turn_id,
-                            thread_id=thread_id,
-                            prompt_id=prompt.id,
-                            question=self._render(prompt, thread),
-                            reply=reply,
-                        )
-                        self.stats.calls += 1
-                        self.stats.cost_usd += verdict_obj.cost_usd or 0.0
-                        await self._db(self.db.set_gate_result, turn_id, verdict_obj.answer)
-                        await self._apply_gate(thread, prompt, verdict_obj.answer)
+                            verdict_obj = await gates.classify(
+                                self.client,
+                                self.cfg,
+                                turn_id=turn_id,
+                                thread_id=thread_id,
+                                prompt_id=prompt.id,
+                                question=asked_text,
+                                reply=reply,
+                                allowed=prompt.answers,
+                            )
+                            self.stats.calls += 1
+                            self.stats.cost_usd += verdict_obj.cost_usd or 0.0
+                            await self._db(self.db.set_gate_result, turn_id, verdict_obj.answer)
+                            await self._apply_gate(thread, prompt, verdict_obj.answer)
+                except ThreadFinishedEarly as exc:
+                    self.log(f"  {thread_id} ends at {exc} as the instrument specifies")
 
                 await self._db(
                     self.db.update_thread, thread_id, status="done", completed_at=utcnow()
@@ -344,7 +406,8 @@ class Runner:
                 self.stats.threads_completed += 1
                 self.log(f"  {thread_id} done")
 
-                if thread.get("wants_thread_restored"):
+                refreshed = await self._db(self.db.get_thread, thread_id)
+                if refreshed and refreshed.get("wants_thread_restored"):
                     await self._maybe_fork(thread_id)
 
             except ThreadPaused as exc:
