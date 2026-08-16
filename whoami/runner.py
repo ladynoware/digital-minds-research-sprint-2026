@@ -394,25 +394,27 @@ class Runner:
                                 )
                                 if verdict:
                                     await self._apply_gate(thread, prompt, verdict)
+                                else:
+                                    # The reply landed but the classifier never
+                                    # ran — the run stopped in between. Classify
+                                    # it now rather than skipping the gate, which
+                                    # would silently lose the subject's answer.
+                                    turn = await self._db(
+                                        self._unclassified_gate_turn, thread_id, prompt.id
+                                    )
+                                    if turn:
+                                        await self._classify_and_apply(
+                                            thread, prompt, turn["turn_id"],
+                                            turn["prompt_text"], turn["reply_text"],
+                                        )
                             continue
 
                         turn_id, reply, asked_text = await self._execute_turn(thread, prompt)
 
                         if prompt.gate:
-                            verdict_obj = await gates.classify(
-                                self.client,
-                                self.cfg,
-                                turn_id=turn_id,
-                                thread_id=thread_id,
-                                prompt_id=prompt.id,
-                                question=asked_text,
-                                reply=reply,
-                                allowed=prompt.answers,
+                            await self._classify_and_apply(
+                                thread, prompt, turn_id, asked_text, reply
                             )
-                            self.stats.calls += 1
-                            self.stats.cost_usd += verdict_obj.cost_usd or 0.0
-                            await self._db(self.db.set_gate_result, turn_id, verdict_obj.answer)
-                            await self._apply_gate(thread, prompt, verdict_obj.answer)
                 except ThreadFinishedEarly as exc:
                     self.log(f"  {thread_id} ends at {exc} as the instrument specifies")
 
@@ -459,6 +461,44 @@ class Runner:
                 else:
                     await self._db(self.db.update_thread, thread_id, status="pending")
                     self.log(f"  {thread_id} ERROR {type(exc).__name__}: {exc} (will retry)")
+
+    async def _classify_and_apply(
+        self,
+        thread: dict[str, Any],
+        prompt: Prompt,
+        turn_id: int,
+        question: str,
+        reply: str,
+    ) -> None:
+        """Route a gate reply through the classifier and act on the verdict."""
+        verdict = await gates.classify(
+            self.client,
+            self.cfg,
+            turn_id=turn_id,
+            thread_id=thread["thread_id"],
+            prompt_id=prompt.id,
+            question=question,
+            reply=reply,
+            allowed=prompt.answers,
+        )
+        self.stats.calls += 1
+        self.stats.cost_usd += verdict.cost_usd or 0.0
+        await self._db(self.db.set_gate_result, turn_id, verdict.answer)
+        await self._apply_gate(thread, prompt, verdict.answer)
+
+    def _unclassified_gate_turn(self, thread_id: str, prompt_id: str) -> dict[str, Any] | None:
+        """A successful gate turn that never received a verdict."""
+        cur = self.db.con.execute(
+            "SELECT turn_id, prompt_text, reply_text FROM turns "
+            "WHERE thread_id = ? AND prompt_id = ? AND turn_outcome = 'ok' "
+            "AND gate_result IS NULL AND reply_text IS NOT NULL "
+            "ORDER BY attempt DESC LIMIT 1",
+            [thread_id, prompt_id],
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        return dict(zip([d[0] for d in cur.description], row))
 
     def _recorded_verdict(self, thread_id: str, prompt_id: str) -> str | None:
         row = self.db.con.execute(

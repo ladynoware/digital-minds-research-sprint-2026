@@ -294,25 +294,32 @@ def check_truncation(db: Database, cfg: Config, report: Report) -> None:
     a normal response, just cut off. Warn rather than fail — the ceiling is a
     judgement call — but make it impossible to publish without having seen it.
     """
-    ceiling = int(cfg.roster.api.get("max_tokens", 0) or 0)
-    if not ceiling:
+    default_ceiling = int(cfg.roster.api.get("max_tokens", 0) or 0)
+    if not default_ceiling:
         return
-    threshold = int(ceiling * 0.98)
+    # Ceilings are per model: reasoning models are given far more headroom,
+    # so comparing everything against the default flags them falsely.
+    overrides = {
+        model: int(limit)
+        for model, limit in (cfg.roster.api.get("max_tokens_overrides") or {}).items()
+    }
     rows = db.con.execute(
-        "SELECT turn_id, thread_id, prompt_id, tokens_out FROM turns "
-        "WHERE turn_outcome = 'ok' AND tokens_out >= ? ORDER BY tokens_out DESC",
-        [threshold],
+        "SELECT turn_id, thread_id, prompt_id, requested_model, tokens_out FROM turns "
+        "WHERE turn_outcome = 'ok' AND tokens_out IS NOT NULL ORDER BY tokens_out DESC"
     ).fetchall()
-    high = db.con.execute(
-        "SELECT COALESCE(MAX(tokens_out), 0) FROM turns WHERE turn_outcome = 'ok'"
-    ).fetchone()[0]
+    at_ceiling = []
+    for turn_id, thread_id, prompt_id, model, tokens in rows:
+        ceiling = overrides.get(model, default_ceiling)
+        if tokens >= int(ceiling * 0.98):
+            at_ceiling.append(
+                f"turn {turn_id} ({thread_id}/{prompt_id}, {model}) produced "
+                f"{tokens} tokens against a {ceiling} ceiling"
+            )
+    high = rows[0][4] if rows else 0
     report.add(
-        f"no replies at the token ceiling (max seen {high} of {ceiling})",
-        not rows,
-        "\n".join(
-            f"turn {t} ({th}/{p}) produced {n} tokens against a {ceiling} ceiling"
-            for t, th, p, n in rows[:10]
-        ),
+        f"no replies at their model's token ceiling (longest seen {high} tokens)",
+        not at_ceiling,
+        "\n".join(at_ceiling[:10]),
         severity="warn",
     )
 
