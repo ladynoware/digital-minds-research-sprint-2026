@@ -1,0 +1,45 @@
+name: Deploy results site
+
+# GitHub Pages can only serve a branch from / or /docs, and the site lives in
+# /site — so it is deployed as an artifact from here instead. That keeps the
+# site where it is, with no docs/ duplicate to drift out of sync.
+#
+# A re-export (python export_site_data.py) touches site/data/*.json, so pushing
+# the new data is all it takes to publish it.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; queue them instead of cancelling, so a data
+# re-export cannot be dropped on the floor by a later unrelated push.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
