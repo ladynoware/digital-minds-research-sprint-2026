@@ -524,13 +524,55 @@ class Runner:
         )
         self.log(f"  {thread_id} forked -> {branch_id} at {fork_point}")
 
+    @staticmethod
+    def _spread_by_resident(threads: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Round-robin the queue across residents.
+
+        A limited run otherwise takes the first N in creation order, which is N
+        threads of one model. For a pilot that is close to worthless: the point
+        is to exercise every provider integration before the fleet, not one of
+        them ten times.
+        """
+        by_resident: dict[str, list[dict[str, Any]]] = {}
+        for t in threads:
+            by_resident.setdefault(t["resident_model"], []).append(t)
+
+        ordered: dict[str, list[dict[str, Any]]] = {}
+        for i, resident in enumerate(sorted(by_resident)):
+            by_condition: dict[str, list[dict[str, Any]]] = {}
+            for t in by_resident[resident]:
+                by_condition.setdefault(t["swap_condition"], []).append(t)
+            conditions = sorted(by_condition)
+            # Rotate the condition order per resident. Without this every
+            # resident leads with the same condition and a 10-thread pilot is
+            # ten clean threads — no swap exercised anywhere.
+            offset = i % len(conditions)
+            rotated = conditions[offset:] + conditions[:offset]
+            seq: list[dict[str, Any]] = []
+            while any(by_condition[c] for c in conditions):
+                for c in rotated:
+                    if by_condition[c]:
+                        seq.append(by_condition[c].pop(0))
+            ordered[resident] = seq
+
+        out: list[dict[str, Any]] = []
+        while any(ordered.values()):
+            for resident in sorted(ordered):
+                if ordered[resident]:
+                    out.append(ordered[resident].pop(0))
+        return out
+
     # -- the poll loop ----------------------------------------------------
-    async def run(self, limit: int | None = None, watch: bool = False) -> RunStats:
+    async def run(
+        self, limit: int | None = None, watch: bool = False, spread: bool = False
+    ) -> RunStats:
         while True:
             await self._db(
                 drain_inbox, self.db, self.paths.inbox, self.paths.inbox_marker
             )
             pending = await self._db(self.db.threads_by_status, "pending", "running")
+            if spread:
+                pending = self._spread_by_resident(pending)
             if limit is not None:
                 pending = pending[:limit]
             if not pending:

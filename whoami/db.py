@@ -16,6 +16,7 @@ import itertools
 import json
 import os
 import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,8 @@ import duckdb
 
 # Distinguishes concurrent snapshot writes inside one process.
 _snapshot_seq = itertools.count()
+_REPLACE_RETRIES = 6
+_REPLACE_BACKOFF_S = 0.25
 
 THREAD_STATUSES = (
     "pending",
@@ -366,7 +369,20 @@ class Database:
                     self.con.execute(f"DETACH {alias}")
             # os.replace is atomic within a filesystem, so a reader either sees
             # the old snapshot or the new one, never a half-written file.
-            os.replace(tmp, dest)
+            #
+            # On Windows it also fails outright while another process holds the
+            # destination open — the dashboard reading it is enough. That is
+            # transient by nature, so retry briefly and then give up: a missed
+            # refresh costs a few seconds of staleness, and the next one is due
+            # immediately anyway.
+            for attempt in range(_REPLACE_RETRIES):
+                try:
+                    os.replace(tmp, dest)
+                    break
+                except PermissionError:
+                    if attempt == _REPLACE_RETRIES - 1:
+                        raise
+                    time.sleep(_REPLACE_BACKOFF_S)
         finally:
             if tmp.exists():
                 tmp.unlink(missing_ok=True)

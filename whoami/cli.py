@@ -306,7 +306,9 @@ async def _run(args, cfg: Config, paths: RunPaths, probes: dict[str, set[str]] |
     with Database(paths.db_path) as db:
         runner = _build_runner(args, cfg, db, paths, probes)
         runner.write_manifest(args.note or "")
-        stats = await runner.run(limit=args.limit, watch=args.watch)
+        stats = await runner.run(
+            limit=args.limit, watch=args.watch, spread=getattr(args, "spread", False)
+        )
         await runner.client.aclose()
     print()
     print("--- run summary ---")
@@ -468,6 +470,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     r = common(sub.add_parser("run", help="execute pending threads"), run_flags=True)
     r.add_argument("--seed", action="store_true", help="materialise missing threads first")
+    r.add_argument(
+        "--spread",
+        action="store_true",
+        help="with --limit, take threads round-robin across residents (use for the pilot)",
+    )
     r.add_argument("--fork-threads", nargs="*", help="mock only: thread ids that accept the fork")
     r.set_defaults(func=cmd_run)
 

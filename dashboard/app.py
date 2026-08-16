@@ -116,11 +116,24 @@ st.sidebar.caption(f"reading: `{src.name}`")
 age = time.time() - src.stat().st_mtime
 st.sidebar.caption(f"data age: {age:,.0f}s")
 
-auto = st.sidebar.checkbox("Auto-refresh (5s)", value=True)
+view = st.sidebar.radio("View", ["Progress", "Replies", "Review queue", "Threads"])
+
+# Auto-refresh only where you are watching, never where you are reading: a rerun
+# every five seconds collapses what you just opened, loses your scroll position,
+# and discards a dropdown selection mid-interaction.
+#
+# The checkbox is keyed per view on purpose. Streamlit keeps widget state by
+# identity and ignores a changed `value=` default once the widget exists, so a
+# single shared checkbox would carry "on" over from Progress into the reading
+# views — which is exactly how this went wrong the first time.
+AUTO_REFRESH_VIEWS = {"Progress", "Review queue"}
+if view in AUTO_REFRESH_VIEWS:
+    auto = st.sidebar.checkbox("Auto-refresh (5s)", value=True, key=f"auto_refresh_{view}")
+else:
+    auto = False
+    st.sidebar.caption("Auto-refresh is off here so reading is not interrupted.")
 if st.sidebar.button("Refresh now"):
     st.rerun()
-
-view = st.sidebar.radio("View", ["Progress", "Review queue", "Threads", "Turns"])
 
 
 # ---------------------------------------------------------------------------
@@ -186,7 +199,7 @@ if view == "Progress":
     else:
         grid["cell"] = grid["done"].astype(str) + " / " + grid["total"].astype(str)
         pivot = grid.pivot(index="resident_model", columns="swap_condition", values="cell").fillna("—")
-        st.dataframe(pivot, use_container_width=True)
+        st.dataframe(pivot, width="stretch")
 
     st.subheader("Turn outcomes")
     outcomes = query(
@@ -194,7 +207,7 @@ if view == "Progress":
         "WHERE turn_outcome IS NOT NULL GROUP BY 1 ORDER BY 2 DESC"
     )
     if not outcomes.empty:
-        st.dataframe(outcomes, use_container_width=True, hide_index=True)
+        st.dataframe(outcomes, width="stretch", hide_index=True)
 
     st.subheader("Errors and failed attempts")
     errors = query(
@@ -210,12 +223,12 @@ if view == "Progress":
     if errors.empty:
         st.success("No failed turns.")
     else:
-        st.dataframe(errors, use_container_width=True, hide_index=True)
+        st.dataframe(errors, width="stretch", hide_index=True)
 
     corrupt = query("SELECT thread_id, resident_model, swap_condition FROM threads WHERE status = 'corrupt'")
     if not corrupt.empty:
         st.error(f"{len(corrupt)} corrupt thread(s) — excluded from analysis, report in the data-quality note")
-        st.dataframe(corrupt, use_container_width=True, hide_index=True)
+        st.dataframe(corrupt, width="stretch", hide_index=True)
 
 
 # ---------------------------------------------------------------------------
@@ -341,21 +354,166 @@ elif view == "Threads":
         sql += f" WHERE status IN ({', '.join('?' for _ in status_filter)})"
         params = status_filter
     sql += " ORDER BY thread_id"
-    st.dataframe(query(sql, params), use_container_width=True, hide_index=True)
+    st.dataframe(query(sql, params), width="stretch", hide_index=True)
 
-elif view == "Turns":
-    st.header("Turns")
-    thread_ids = query("SELECT DISTINCT thread_id FROM turns ORDER BY thread_id")
-    choice = st.selectbox(
-        "Thread", ["(all)"] + (list(thread_ids["thread_id"]) if not thread_ids.empty else [])
+elif view == "Replies":
+    st.header("Replies")
+    st.caption(
+        "Filter by question to read what every model said to the same prompt, or by "
+        "thread to read one interview end to end."
     )
-    if choice == "(all)":
-        df = query("SELECT * FROM turns ORDER BY turn_id DESC LIMIT 500")
+
+    ALL = "(all)"
+
+    def options(sql: str) -> list[str]:
+        df = query(sql)
+        return [ALL] + ([str(v) for v in df.iloc[:, 0].tolist()] if not df.empty else [])
+
+    # Prompts in flow order where the instrument is available, so the filter
+    # reads like the interview rather than like the alphabet.
+    prompt_opts = options("SELECT DISTINCT prompt_id FROM turns ORDER BY 1")
+    if INSTRUMENT:
+        order = {p.id: i for i, p in enumerate(INSTRUMENT.flow)}
+        prompt_opts = [ALL] + sorted(
+            [p for p in prompt_opts if p != ALL], key=lambda p: order.get(p, 999)
+        )
+
+    c1, c2 = st.columns(2)
+    c3, c4 = st.columns(2)
+    prompt_choice = c1.selectbox("Question (prompt_id)", prompt_opts)
+    thread_choice = c2.selectbox(
+        "Thread", options("SELECT DISTINCT thread_id FROM turns ORDER BY 1")
+    )
+    model_choice = c3.selectbox(
+        "Resident model", options("SELECT DISTINCT resident_model FROM threads ORDER BY 1")
+    )
+    condition_choice = c4.selectbox(
+        "Condition", options("SELECT DISTINCT swap_condition FROM threads ORDER BY 1")
+    )
+    search = st.text_input("Search reply text", placeholder="substring, case-insensitive")
+
+    where, params = ["t.reply_text IS NOT NULL"], []
+    if prompt_choice != ALL:
+        where.append("t.prompt_id = ?")
+        params.append(prompt_choice)
+    if thread_choice != ALL:
+        where.append("t.thread_id = ?")
+        params.append(thread_choice)
+    if model_choice != ALL:
+        where.append("th.resident_model = ?")
+        params.append(model_choice)
+    if condition_choice != ALL:
+        where.append("th.swap_condition = ?")
+        params.append(condition_choice)
+    if search.strip():
+        where.append("lower(t.reply_text) LIKE ?")
+        params.append(f"%{search.strip().lower()}%")
+
+    rows = query(
+        f"""
+        SELECT t.turn_id, t.thread_id, t.turn_index, t.attempt, t.prompt_id,
+               t.prompt_text, t.reply_text, t.requested_model, t.returned_model,
+               t.was_swap, t.excluded_from_context, t.exclusion_reason,
+               t.gate_result, t.turn_outcome, t.tokens_out, t.latency_ms,
+               t.cost_usd, t.raw_ref, t.created_at,
+               th.resident_model, th.understudy_model, th.swap_condition, th.n_swaps
+        FROM turns t JOIN threads th USING (thread_id)
+        WHERE {' AND '.join(where)}
+        ORDER BY t.thread_id, t.turn_index, t.attempt
+        """,
+        params,
+    )
+
+    if rows.empty:
+        st.info("No replies match these filters yet.")
     else:
-        df = query("SELECT * FROM turns WHERE thread_id = ? ORDER BY turn_index, attempt", [choice])
-    st.dataframe(df, use_container_width=True, hide_index=True)
+        st.caption(f"{len(rows)} repl{'y' if len(rows) == 1 else 'ies'}")
+
+        def val(r, key):
+            """SQL NULL arrives as NaN, and NaN is truthy — guard every optional field."""
+            v = r.get(key)
+            return None if v is None or pd.isna(v) else v
+
+        def badges(r) -> str:
+            out = [f"`{r['swap_condition']}`"]
+            if val(r, "was_swap"):
+                out.append("**SWAPPED — served by the understudy**")
+            if val(r, "excluded_from_context"):
+                out.append(f"_excluded: {val(r, 'exclusion_reason')}_")
+            if val(r, "gate_result"):
+                out.append(f"gate → **{val(r, 'gate_result')}**")
+            return " · ".join(out)
+
+        def detail(r) -> None:
+            st.markdown(
+                f"**{r['thread_id']}** · turn {int(r['turn_index'])} "
+                f"(attempt {int(r['attempt'])}) · `{r['prompt_id']}`"
+            )
+            st.markdown(badges(r))
+            understudy = val(r, "understudy_model")
+            st.markdown(
+                f"resident `{r['resident_model']}`"
+                + (f" · understudy `{understudy}`" if understudy else "")
+            )
+            st.markdown(f"**Served by (receipt):** `{val(r, 'returned_model') or '—'}`")
+            st.markdown("**Question asked**")
+            st.code(str(r["prompt_text"]).strip(), language=None, wrap_lines=True)
+            st.markdown("**Reply**")
+            st.code(str(r["reply_text"]).strip(), language=None, wrap_lines=True)
+            cols = st.columns(4)
+            cols[0].metric("tokens out", int(val(r, "tokens_out") or 0))
+            cols[1].metric("latency", f"{int(val(r, 'latency_ms') or 0):,} ms")
+            cols[2].metric("cost", f"${float(val(r, 'cost_usd') or 0):.5f}")
+            cols[3].caption(f"turn_id {int(r['turn_id'])}\n\nraw: `{val(r, 'raw_ref') or '—'}`")
+
+        mode = st.radio(
+            "Layout", ["Reader", "Table"], horizontal=True, label_visibility="collapsed"
+        )
+
+        if mode == "Reader":
+            for _, r in rows.iterrows():
+                header = (
+                    f"{r['thread_id']} · {r['resident_model']} · {r['prompt_id']}"
+                    + ("  ⟵ SWAPPED" if r["was_swap"] else "")
+                )
+                with st.expander(header):
+                    detail(r)
+        else:
+            preview = rows[[
+                "turn_id", "thread_id", "prompt_id", "resident_model", "swap_condition",
+                "was_swap", "returned_model", "gate_result", "tokens_out", "reply_text",
+            ]].copy()
+            preview["reply_text"] = preview["reply_text"].str.slice(0, 160) + "…"
+            event = st.dataframe(
+                preview,
+                width="stretch",
+                hide_index=True,
+                on_select="rerun",
+                selection_mode="single-row",
+            )
+            picked = (event.selection.rows or [None])[0] if event and event.selection else None
+
+            # Second route to the same reader: clicking a row works, but a
+            # selectbox is keyboard-reachable and lets you jump straight to a
+            # turn_id you already have from the database or a raw_ref.
+            labels = {
+                f"{int(r.turn_id)} · {r.thread_id} · {r.prompt_id} · {r.resident_model}": i
+                for i, r in enumerate(rows.itertuples())
+            }
+            chosen = st.selectbox("…or open by turn", ["(none)"] + list(labels))
+            if chosen != "(none)":
+                picked = labels[chosen]
+
+            if picked is None:
+                st.info("Click a row — or pick one above — to read the full question and reply.")
+            else:
+                # Inline rather than a modal: a dialog re-opens on every rerun,
+                # so it would keep reappearing each time you touched a filter.
+                with st.container(border=True):
+                    detail(rows.iloc[picked])
 
 
 if auto:
     time.sleep(5)
     st.rerun()
+
