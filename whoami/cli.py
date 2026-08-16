@@ -47,6 +47,28 @@ def _run_id() -> str:
     return utcnow().strftime("%Y%m%d-%H%M%S")
 
 
+def _read_db(paths: RunPaths) -> tuple[Database, str]:
+    """Open the database for reading, whether or not a run is in flight.
+
+    DuckDB allows one read-write process and otherwise only readers, so while
+    the runner holds the file even a read-only open fails. Fall back to the
+    snapshot the runner refreshes every few seconds — a few seconds stale beats
+    a traceback when you are checking on a live fleet.
+    """
+    import duckdb
+
+    try:
+        return Database(paths.db_path, read_only=True), str(paths.db_path)
+    except duckdb.Error:
+        if paths.snapshot.exists():
+            age = time.time() - paths.snapshot.stat().st_mtime
+            return (
+                Database(paths.snapshot, read_only=True),
+                f"{paths.snapshot} (runner is live; snapshot {age:.0f}s old)",
+            )
+        raise
+
+
 def _resident_models(cfg: Config, names: list[str] | None) -> set[str] | None:
     """Resolve roster keys or full model strings to model strings."""
     if not names:
@@ -107,10 +129,11 @@ def cmd_status(args) -> int:
     if not paths.db_path.exists():
         print(f"No database at {paths.db_path}")
         return 1
-    with Database(paths.db_path) as db:
+    db, source = _read_db(paths)
+    with db:
         counts = db.status_counts()
         total = sum(counts.values())
-        print(f"Database: {paths.db_path}")
+        print(f"Database: {source}")
         print(f"Threads: {total}")
         for status in ("pending", "running", "paused_review", "done", "stopped_no_consent", "corrupt"):
             print(f"  {status:<20} {counts.get(status, 0)}")
@@ -133,7 +156,9 @@ def cmd_status(args) -> int:
 def cmd_verify(args) -> int:
     cfg = _config(args)
     paths = RunPaths.for_profile(args.dry_run, REPO_ROOT)
-    with Database(paths.db_path, read_only=True) as db:
+    db, source = _read_db(paths)
+    print(f"Reading: {source}\n")
+    with db:
         report = verify.run_all(db, cfg, paths.raw_dir, args.require_review_queue)
     print(report.render())
     return 0 if report.passed else 1
