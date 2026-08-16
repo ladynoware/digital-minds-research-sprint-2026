@@ -564,13 +564,22 @@ class Runner:
 
     # -- the poll loop ----------------------------------------------------
     async def run(
-        self, limit: int | None = None, watch: bool = False, spread: bool = False
+        self,
+        limit: int | None = None,
+        watch: bool = False,
+        spread: bool = False,
+        only_residents: set[str] | None = None,
+        exclude_residents: set[str] | None = None,
     ) -> RunStats:
         while True:
             await self._db(
                 drain_inbox, self.db, self.paths.inbox, self.paths.inbox_marker
             )
             pending = await self._db(self.db.threads_by_status, "pending", "running")
+            if only_residents:
+                pending = [t for t in pending if t["resident_model"] in only_residents]
+            if exclude_residents:
+                pending = [t for t in pending if t["resident_model"] not in exclude_residents]
             if spread:
                 pending = self._spread_by_resident(pending)
             if limit is not None:

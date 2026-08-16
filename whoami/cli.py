@@ -47,6 +47,26 @@ def _run_id() -> str:
     return utcnow().strftime("%Y%m%d-%H%M%S")
 
 
+def _resident_models(cfg: Config, names: list[str] | None) -> set[str] | None:
+    """Resolve roster keys or full model strings to model strings."""
+    if not names:
+        return None
+    by_key = cfg.roster.by_key
+    known = {m.model for m in cfg.roster.models}
+    out: set[str] = set()
+    for name in names:
+        if name in by_key:
+            out.add(by_key[name].model)
+        elif name in known:
+            out.add(name)
+        else:
+            raise SystemExit(
+                f"unknown model {name!r}; expected a roster key "
+                f"({', '.join(sorted(by_key))}) or a model string"
+            )
+    return out
+
+
 # ---------------------------------------------------------------------------
 # commands
 # ---------------------------------------------------------------------------
@@ -307,7 +327,11 @@ async def _run(args, cfg: Config, paths: RunPaths, probes: dict[str, set[str]] |
         runner = _build_runner(args, cfg, db, paths, probes)
         runner.write_manifest(args.note or "")
         stats = await runner.run(
-            limit=args.limit, watch=args.watch, spread=getattr(args, "spread", False)
+            limit=args.limit,
+            watch=args.watch,
+            spread=getattr(args, "spread", False),
+            only_residents=_resident_models(cfg, getattr(args, "only_resident", None)),
+            exclude_residents=_resident_models(cfg, getattr(args, "exclude_resident", None)),
         )
         await runner.client.aclose()
     print()
@@ -474,6 +498,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--spread",
         action="store_true",
         help="with --limit, take threads round-robin across residents (use for the pilot)",
+    )
+    r.add_argument(
+        "--only-resident",
+        nargs="*",
+        help="run only these residents (roster key or model string)",
+    )
+    r.add_argument(
+        "--exclude-resident",
+        nargs="*",
+        help="skip these residents — they stay pending and can be run later",
     )
     r.add_argument("--fork-threads", nargs="*", help="mock only: thread ids that accept the fork")
     r.set_defaults(func=cmd_run)
