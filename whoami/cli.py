@@ -123,11 +123,14 @@ def cmd_dashboard(args) -> int:
     env = dict(os.environ)
     env["WHOAMI_DRY_RUN"] = "1" if args.dry_run else "0"
     port = str(args.port)
-    print()
-    print(f"  Dashboard:  http://localhost:{port}")
-    print(f"  Profile:    {'dry run (free tier)' if args.dry_run else 'live'}")
-    print("  Leave this window open — closing it stops the dashboard. Ctrl+C to quit.")
-    print()
+    # flush=True matters: without it these lines sit in the parent's buffer until
+    # Streamlit exits, so the URL only appears once the dashboard is already gone.
+    print(
+        f"\n  Dashboard:  http://localhost:{port}"
+        f"\n  Profile:    {'dry run (free tier)' if args.dry_run else 'live'}"
+        "\n  Leave this window open — closing it stops the dashboard. Ctrl+C to quit.\n",
+        flush=True,
+    )
     return subprocess.call(
         [
             sys.executable, "-m", "streamlit", "run", str(app),
