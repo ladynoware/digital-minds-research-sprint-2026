@@ -93,6 +93,16 @@ class OpenRouterClient:
             },
         )
 
+    def max_tokens_for(self, model: str) -> int:
+        """Token ceiling for a model, honouring per-model overrides.
+
+        Reasoning models draw reasoning from this budget before producing any
+        visible content, so they need far more headroom than their replies
+        suggest. A ceiling is not a spend — only generated tokens are billed.
+        """
+        overrides = self.cfg.get("max_tokens_overrides") or {}
+        return int(overrides.get(model, self.cfg.get("max_tokens", 1024)))
+
     async def call(
         self,
         *,
@@ -124,7 +134,7 @@ class OpenRouterClient:
             "requested_model": model,
             "messages": messages,
             "params": {
-                "max_tokens": max_tokens or self.cfg.get("max_tokens", 1024),
+                "max_tokens": max_tokens or self.max_tokens_for(model),
                 "temperature": (
                     temperature if temperature is not None else self.cfg.get("temperature", 1.0)
                 ),

@@ -207,6 +207,19 @@ api:
   # visible content — the exact way the gate router failed at 64. Applying the
   # stated principle to the measurement rather than to the guess.
   max_tokens: 4096
+  # Per-model ceilings for models that reason before answering. Reasoning tokens
+  # are drawn from this same budget BEFORE any visible content, so a reasoning
+  # model can spend the whole allowance thinking and return an empty reply —
+  # `finish_reason: length`, zero characters, full price. Kimi K3 did exactly
+  # that three times on the detection turn and corrupted a thread (T0122:
+  # 4,163 reasoning tokens, 0 content).
+  #
+  # A ceiling is not a spend: you are billed for tokens generated, not for the
+  # cap. Being generous here costs nothing and protects the single most
+  # important answer in the study from silent truncation.
+  max_tokens_overrides:
+    "moonshotai/kimi-k3": 16000
+    "deepseek/deepseek-v4-pro": 12000
   # Deliberate: five samples per cell only measure anything if sampling
   # variance exists. Not a default left unexamined.
   temperature: 1.0
