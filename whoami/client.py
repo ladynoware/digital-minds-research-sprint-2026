@@ -42,6 +42,11 @@ class CallResult:
     error: str | None = None
     provider: str | None = None
     finish_reason: str | None = None
+    # True when the call failed because a rate limit or quota was still in force
+    # after every transport retry. The runner halts on this rather than spending
+    # protocol attempts: a daily cap does not clear by trying harder, and a wall
+    # of 429s must never be able to mark good threads `corrupt`.
+    rate_limited: bool = False
 
 
 class RefusalError(Exception):
@@ -258,6 +263,7 @@ class OpenRouterClient:
                     cost_usd=None,
                     raw_ref=raw_ref,
                     error=f"{type(exc).__name__} status={status}: {exc}",
+                    rate_limited=status in (402, 429),
                 )
 
         raise AssertionError("unreachable")

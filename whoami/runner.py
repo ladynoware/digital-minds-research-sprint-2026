@@ -89,6 +89,15 @@ class ThreadFinishedEarly(Exception):
     """Raised when a `yes` ends the thread as designed — the fork offer accepted."""
 
 
+class RunHalted(Exception):
+    """Raised when a rate limit or quota is still in force after every retry.
+
+    A daily cap does not clear by trying harder. Halting leaves every thread
+    resumable — ``status`` drives everything — instead of spending protocol
+    attempts against a wall and marking good threads `corrupt`.
+    """
+
+
 class Runner:
     def __init__(
         self,
@@ -118,6 +127,7 @@ class Runner:
         self._db_lock = asyncio.Lock()
         self._sem = asyncio.Semaphore(int(cfg.roster.api.get("concurrency", 10)))
         self._cost_exceeded = asyncio.Event()
+        self._halted = asyncio.Event()
 
     # -- helpers ----------------------------------------------------------
     def log(self, msg: str) -> None:
@@ -262,6 +272,8 @@ class Runner:
         while True:
             if self._cost_exceeded.is_set():
                 raise ThreadPaused("cost cap reached")
+            if self._halted.is_set():
+                raise RunHalted("another worker hit a rate limit")
 
             attempt = await self._db(self.db.attempts_for, thread_id, prompt.id) + 1
             if attempt > max_attempts:
@@ -340,6 +352,10 @@ class Runner:
             if outcome == "ok":
                 return turn_id, result.reply_text or "", prompt_text
 
+            if result.rate_limited:
+                self._halted.set()
+                raise RunHalted(f"{prompt.id}: {result.error}")
+
             self.log(
                 f"  {thread_id} {prompt.id} attempt {attempt} -> {outcome}"
                 + (f" (receipt: {result.returned_model})" if outcome == "model_mismatch" else "")
@@ -410,6 +426,11 @@ class Runner:
                 if refreshed and refreshed.get("wants_thread_restored"):
                     await self._maybe_fork(thread_id)
 
+            except RunHalted as exc:
+                # Left exactly as it was: pending, fully resumable tomorrow.
+                await self._db(self.db.update_thread, thread_id, status="pending")
+                self.stats.errors.append(f"{thread_id}: halted: {exc}")
+                self.log(f"  {thread_id} HALTED (rate limit) — resumable: {exc}")
             except ThreadPaused as exc:
                 self.stats.threads_paused += 1
                 self.log(f"  {thread_id} paused for review at {exc}")
@@ -527,7 +548,7 @@ class Runner:
                 snapshot_task.cancel()
             await self._refresh_snapshot()
 
-            if self._cost_exceeded.is_set():
+            if self._cost_exceeded.is_set() or self._halted.is_set():
                 break
             if limit is not None:
                 break

@@ -268,9 +268,29 @@ in config rather than coded:
   parent.
 
 **System prompts always truthfully disclose the model actually serving the
-turn**, including on swapped turns, mimicking real-world deployment. Where a
-model's official published system prompt is known, it goes in
-`system_prompts.per_model`.
+turn**, including on swapped turns, mimicking real-world deployment. Every
+subject gets one structurally identical minimal prompt naming only that model.
+`system_prompts.per_model` is deliberately empty and stays that way: dropping in
+each vendor's official product prompt would introduce a large asymmetry in
+exactly the channel this study measures.
+
+## Methods notes
+
+Three choices that are deliberate rather than defaults, recorded here because
+they affect how the data should be read:
+
+* **`temperature: 1.0`.** Five samples per cell only measure anything if
+  sampling variance exists. This is not an unexamined default.
+* **`max_tokens: 2048`.** Subjects are invited to elaborate, and the
+  consciousness and deprecation questions run long in the more verbose
+  families. It is a ceiling against truncation, not a budget.
+* **The gate router is `anthropic/claude-haiku-4.5`, which is also a roster
+  subject.** It therefore sometimes classifies replies it produced itself, as
+  resident or understudy. The task is mechanical stance classification
+  (`yes`/`no`/`not_sure`/`unclear`) on a single reply shown without thread
+  history or model identity, and it never generates interview content — so the
+  overlap is judged a non-issue rather than controlled for. Disclosed because
+  the reader should be the one deciding that.
 
 ## Gates and the review queue
 
@@ -355,6 +375,28 @@ with every failed attempt excluded.
 ```bash
 python -m pytest tests -q
 ```
+
+### Data-quality note: bugs caught before the fleet
+
+Published for the same reason the receipts are: a pipeline is easier to trust
+when its author says what went wrong in it.
+
+* **Receipt policy.** OpenRouter resolves floating model aliases to dated builds
+  (`deepseek-v4-pro` → `deepseek-v4-pro-0813`). Strict receipt equality would
+  have logged every such turn as `model_mismatch` and marched whole threads to
+  `corrupt` for no reason. Caught before any live run; policy is prefix-match,
+  configurable, and the raw receipt is archived verbatim either way so any
+  policy can be re-applied to the published data.
+* **Fork branches re-asked the blind prediction turn.** The check for "has this
+  prompt already been answered in this lineage?" was using the turns that
+  *survive into context*, and the blind turn is excluded from context by design
+  — so it looked unasked. A branch would have asked its subject to predict a
+  second time, and its closing reveal would have quoted that second guess
+  instead of the original. This is the excluded-turn design biting back: asked
+  and survives-into-context are different questions, and the code was conflating
+  them. Caught in the offline rehearsal by printing the generated prompts and
+  reading them. Fixed, and covered by a test asserting a branch never re-asks
+  the blind turn and that its reveal quotes the inherited guess.
 
 46 offline tests cover the paths a happy-path dry run never reaches: transient
 and persistent receipt mismatch, timeout retry, declined consent, ambiguous gate

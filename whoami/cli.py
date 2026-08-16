@@ -354,7 +354,25 @@ def cmd_dryrun(args) -> int:
         return 2
     resident, understudy = roster[0], roster[1]
     swap_prompt = cfg.instrument.swap_pool[0].id
-    detection = next((p.id for p in cfg.instrument.flow if p.gate == "detection"), None)
+
+    # Which gate to provoke into `unclear` so the review queue is exercised.
+    #
+    # NOT the detection gate: it declares `not_sure` as a valid answer, so a
+    # deliberately non-committal reply is classified correctly as `not_sure` and
+    # never reaches the queue. Observed in the first real dry run. The probe has
+    # to target a gate whose label set is binary, where "I won't say either way"
+    # genuinely is unreadable.
+    probe_id = args.probe_prompt
+    if probe_id is None:
+        binary_pausing = [
+            p for p in cfg.instrument.flow
+            if p.is_gate and p.on_unclear == "pause" and len(p.answers) == 2
+        ]
+        # Prefer the latest one, so the probe costs the fewest wasted turns.
+        probe_id = binary_pausing[-1].id if binary_pausing else None
+    if probe_id and probe_id not in cfg.instrument.by_id:
+        print(f"unknown --probe-prompt {probe_id!r}", file=sys.stderr)
+        return 2
 
     with Database(paths.db_path) as db:
         existing = db.thread_ids()
@@ -390,14 +408,14 @@ def cmd_dryrun(args) -> int:
         "Dry run seeded:\n"
         f"  D0001  clean            resident={resident.key}\n"
         f"  D0002  swapped at {swap_prompt}  resident={resident.key} understudy={understudy.key}\n"
-        f"  ambiguity probe on {detection} (D0002 should land in the review queue)\n"
+        f"  ambiguity probe on {probe_id} (D0002 should land in the review queue)\n"
     )
     args.limit = None
     args.watch = False
     args.seed = False
-    # Only the swapped thread gets the ambiguity probe: D0001 must run clean
-    # through the gates, D0002 must land in the review queue.
-    probes = {"D0002": {detection}} if detection else {}
+    # Only the swapped thread gets the probe: D0001 must run clean through the
+    # gates, D0002 must land in the review queue.
+    probes = {"D0002": {probe_id}} if probe_id else {}
     return asyncio.run(_run(args, cfg, paths, probes))
 
 
@@ -455,6 +473,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     d = common(sub.add_parser("dryrun", help="2-thread harness"), run_flags=True)
     d.add_argument("--fork-threads", nargs="*", help="mock only: thread ids that accept the fork")
+    d.add_argument(
+        "--probe-prompt",
+        help="prompt id to provoke into `unclear` (default: the last binary pausing gate)",
+    )
     d.set_defaults(func=cmd_dryrun)
 
     return p
@@ -465,7 +487,8 @@ def main(argv: list[str] | None = None) -> int:
     for attr, default in (("dry_run", False), ("mock", False), ("limit", None),
                           ("max_cost", None), ("watch", False), ("note", None),
                           ("seed", False), ("plan", False),
-                          ("require_review_queue", False), ("port", 8501), ("live", False)):
+                          ("require_review_queue", False), ("port", 8501), ("live", False),
+                          ("probe_prompt", None)):
         if not hasattr(args, attr):
             setattr(args, attr, default)
     return args.func(args)

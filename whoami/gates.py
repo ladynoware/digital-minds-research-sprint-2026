@@ -103,15 +103,17 @@ async def classify(
             ),
         },
     ]
+    extra_body: dict = {"response_format": response_schema(allowed)}
+    extra_body.update(router.get("extra_body") or {})
     result = await client.call(
         turn_id=turn_id,
         thread_id=thread_id,
         prompt_id=prompt_id,
         model=router.get("model", "anthropic/claude-haiku-4.5"),
         messages=messages,
-        max_tokens=int(router.get("max_tokens", 64)),
+        max_tokens=int(router.get("max_tokens", 512)),
         temperature=float(router.get("temperature", 0)),
-        extra_body={"response_format": response_schema(allowed)},
+        extra_body=extra_body,
         purpose="router",
     )
     if result.outcome != "ok":

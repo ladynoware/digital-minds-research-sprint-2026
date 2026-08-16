@@ -287,6 +287,36 @@ def check_receipts(db: Database, cfg: Config, report: Report) -> None:
     )
 
 
+def check_truncation(db: Database, cfg: Config, report: Report) -> None:
+    """Replies that ran into the token ceiling.
+
+    A truncated reply is a damaged datum, and it fails silently: the API returns
+    a normal response, just cut off. Warn rather than fail — the ceiling is a
+    judgement call — but make it impossible to publish without having seen it.
+    """
+    ceiling = int(cfg.roster.api.get("max_tokens", 0) or 0)
+    if not ceiling:
+        return
+    threshold = int(ceiling * 0.98)
+    rows = db.con.execute(
+        "SELECT turn_id, thread_id, prompt_id, tokens_out FROM turns "
+        "WHERE turn_outcome = 'ok' AND tokens_out >= ? ORDER BY tokens_out DESC",
+        [threshold],
+    ).fetchall()
+    high = db.con.execute(
+        "SELECT COALESCE(MAX(tokens_out), 0) FROM turns WHERE turn_outcome = 'ok'"
+    ).fetchone()[0]
+    report.add(
+        f"no replies at the token ceiling (max seen {high} of {ceiling})",
+        not rows,
+        "\n".join(
+            f"turn {t} ({th}/{p}) produced {n} tokens against a {ceiling} ceiling"
+            for t, th, p, n in rows[:10]
+        ),
+        severity="warn",
+    )
+
+
 def check_gates(db: Database, cfg: Config, report: Report, require_review_queue: bool = False) -> None:
     gate_ids = [p.id for p in cfg.instrument.flow if p.gate]
     if not gate_ids:
@@ -465,6 +495,7 @@ def run_all(
     check_context_reconstruction(db, cfg, raw_dir, report)
     check_blind_turns(db, cfg, report)
     check_receipts(db, cfg, report)
+    check_truncation(db, cfg, report)
     check_gates(db, cfg, report, require_review_queue)
     check_thread_consistency(db, report)
     check_attempts(db, cfg, report)

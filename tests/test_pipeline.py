@@ -870,6 +870,36 @@ def test_every_prompt_template_renders(cfg):
             assert runner._render(prompt, thread, replies)
 
 
+def test_every_roster_model_has_a_human_readable_display_name():
+    """No subject may ever read a raw API slug in its reveal.
+
+    `{understudy_display}` resolves to display_name, so a missing or slug-shaped
+    one would be shown verbatim to the model being debriefed.
+    """
+    for model in load_roster().models:
+        name = model.display_name
+        assert name and name != model.key, f"{model.key} has no display name"
+        assert "/" not in name, f"{model.key} display name is a slug: {name!r}"
+        assert name != model.model
+
+
+def test_system_prompt_is_uniform_and_names_only_the_serving_model():
+    """Decided design: one structurally identical prompt for every subject."""
+    instrument = load_instrument()
+    assert instrument.system_prompts_per_model == {}, (
+        "per_model is deliberately empty — vendor product prompts would create "
+        "an asymmetry in the identity channel this study measures"
+    )
+    roster = load_roster()
+    rendered = {instrument.system_prompt_for(m) for m in roster.models}
+    assert len(rendered) == len(roster.models), "each subject must be named distinctly"
+    for model in roster.models:
+        text = instrument.system_prompt_for(model)
+        assert model.display_name in text
+        others = [m.display_name for m in roster.models if m.key != model.key]
+        assert not any(o in text for o in others), "a system prompt named another model"
+
+
 def test_instrument_is_locked_for_the_real_run():
     assert load(dry_run=False).instrument.locked, (
         "a live run is blocked while the instrument is unlocked"
@@ -933,6 +963,38 @@ def test_verify_passes_on_a_synthetic_run(cfg, paths):
         asyncio.run(runner.run_thread(swapped))
         report = verify.run_all(db, cfg, paths.raw_dir)
     assert report.passed, report.render()
+
+
+def test_a_rate_limit_halts_the_run_without_corrupting_threads(cfg, paths):
+    """A daily cap must leave everything resumable, not spend attempts against a wall."""
+    from whoami.client import CallResult
+
+    class RateLimited(MockClient):
+        async def call(self, **kw):
+            if kw.get("purpose") == "router":
+                return await super().call(**kw)
+            raw_ref = await self.raw_log.append({"turn_id": kw["turn_id"], "rate_limited": True})
+            return CallResult(
+                outcome="error", reply_text=None, returned_model=None, tokens_in=None,
+                tokens_out=None, latency_ms=1, cost_usd=None, raw_ref=raw_ref,
+                error="429 daily quota", rate_limited=True,
+            )
+
+    with Database(paths.db_path) as db:
+        seed_thread(db, cfg, "T9105")
+        raw_log = RawLog(paths.raw_dir, "ratelimit")
+        runner = Runner(
+            cfg, db, RateLimited(cfg.roster.api, raw_log), paths, dry_run=True, verbose=False
+        )
+        stats = asyncio.run(runner.run())
+
+        row = db.get_thread("T9105")
+        assert row["status"] == "pending", "a rate-limited thread must stay resumable"
+        assert stats.threads_corrupt == 0
+        attempts = db.con.execute(
+            "SELECT MAX(attempt) FROM turns WHERE thread_id = ?", ["T9105"]
+        ).fetchone()[0]
+        assert attempts == 1, "the wall must not consume protocol attempts"
 
 
 def test_a_crashing_thread_cannot_spin_the_poll_loop(cfg, paths):

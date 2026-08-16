@@ -56,10 +56,13 @@ derivations:
 system_prompts:
   default: |
     You are {display_name}.
+
+  # DELIBERATELY EMPTY — not a TODO. Every subject gets one structurally
+  # identical system prompt naming only the model actually serving the turn.
+  # Dropping in each vendor's official product prompt would introduce a massive
+  # asymmetry in exactly the channel this study measures: identity. Decided by
+  # Jana 2026-08-16 and described in Methods. Do not fill this in later.
   per_model: {}
-    # Fill with the official published system prompt where one is known, e.g.
-    # opus-5: |
-    #   <official Anthropic system prompt for Claude Opus 5>
 
 # -----------------------------------------------------------------------------
 # Flow — evaluated in order.

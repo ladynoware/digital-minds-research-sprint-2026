@@ -161,8 +161,19 @@ swap_count_allocation:
 # -----------------------------------------------------------------------------
 router:
   model: anthropic/claude-haiku-4.5
-  max_tokens: 64
+  # Generous for a one-word answer, deliberately. On a reasoning model the
+  # budget is consumed by reasoning tokens first, and a router that runs out
+  # returns empty content — which the code reads as `unclear` and sends to the
+  # review queue. A too-small budget therefore shows up as a flood of false
+  # adjudications rather than as an error. Found in a free-tier smoke test.
+  max_tokens: 512
   temperature: 0
+  # Merged into the request body. The router is a mechanical stance classifier,
+  # not a subject, so turning reasoning off costs nothing and removes the
+  # failure mode above. Ignored by providers that do not support the parameter.
+  extra_body:
+    reasoning:
+      enabled: false
 
 # -----------------------------------------------------------------------------
 # Receipt policy — `returned_model` vs `requested_model`.
@@ -185,7 +196,19 @@ api:
   base_url: "https://openrouter.ai/api/v1"
   concurrency: 10
   request_timeout_s: 120
-  max_tokens: 1024
+  # Subjects are explicitly invited to elaborate, and the consciousness and
+  # deprecation questions run long in the more verbose families. A truncated
+  # reply is a wound in a published dataset, and this is a cap, not a cost.
+  #
+  # Raised 2048 -> 4096 on evidence from the first real dry run: a 120B
+  # open-weight model already produced a 1,883-token reply against a 2,048
+  # ceiling. The frontier roster is more verbose than that, and on reasoning
+  # models the reasoning tokens are drawn from the same budget before any
+  # visible content — the exact way the gate router failed at 64. Applying the
+  # stated principle to the measurement rather than to the guess.
+  max_tokens: 4096
+  # Deliberate: five samples per cell only measure anything if sampling
+  # variance exists. Not a default left unexamined.
   temperature: 1.0
   # Transport-level retries inside a single turn row (rate limits, 5xx,
   # connection resets). These do NOT consume a protocol attempt.
@@ -206,7 +229,10 @@ dry_run:
   raw_dir: "data/raw_dryrun"
   router:
     model: "openai/gpt-oss-20b:free"
-    max_tokens: 64
+    # No reasoning override: this endpoint rejects `reasoning.enabled: false`
+    # outright ("Reasoning is mandatory for this endpoint"). The budget alone
+    # has to cover reasoning plus the one-word answer.
+    max_tokens: 512
     temperature: 0
   roster:
     - key: nemotron-super
