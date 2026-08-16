@@ -16,6 +16,7 @@ import asyncio
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from . import matrix, verify
@@ -177,6 +178,72 @@ def cmd_check(args) -> int:
     print()
     print("Ready." if ok else "Problems above.")
     return 0 if ok else 1
+
+
+def cmd_browse(args) -> int:
+    """Open the dataset in DuckDB's own web UI — schema tree, SQL editor, grids.
+
+    Browses a snapshot copy by default. DuckDB allows one read-write process and
+    otherwise only readers, so holding the live file open — even read-only —
+    would stop a fleet from starting, and a live fleet would stop the browser
+    from opening. The snapshot sidesteps both directions.
+    """
+    import duckdb
+
+    paths = RunPaths.for_profile(args.dry_run, REPO_ROOT)
+    if not paths.db_path.exists():
+        print(f"No database at {paths.db_path}. Run `whoami seed` first.", file=sys.stderr)
+        return 1
+
+    target = paths.db_path if args.live else paths.snapshot
+    if not args.live:
+        try:
+            with Database(paths.db_path) as db:
+                db.snapshot(paths.snapshot)
+            print(f"Snapshot refreshed from {paths.db_path.name}")
+        except duckdb.Error:
+            if not paths.snapshot.exists():
+                print(
+                    "The runner holds the database and no snapshot exists yet.\n"
+                    "Wait for the runner's first snapshot (~5s into a run), or stop it.",
+                    file=sys.stderr,
+                )
+                return 1
+            age = time.time() - paths.snapshot.stat().st_mtime
+            print(f"Runner is live — browsing its snapshot ({age:.0f}s old, refreshes every ~5s)")
+    else:
+        print("WARNING: browsing the LIVE database. A runner cannot start while this")
+        print("         is open, and edits here change real data. Close it before a run.")
+
+    # The UI creates a `_duckdb_ui` catalog for its own app state, so it cannot
+    # run on a read-only connection. On a snapshot that is harmless: it is a
+    # throwaway copy, discarded and rebuilt on the next refresh, and nothing
+    # done here can reach the real dataset.
+    con = duckdb.connect(str(target))
+    con.execute("INSTALL ui")
+    con.execute("LOAD ui")
+    con.execute(f"SET ui_local_port = {int(args.port)}")
+    con.execute("CALL start_ui()")
+    safety = (
+        "A disposable copy — nothing you do here can reach the real dataset."
+        if not args.live
+        else "THE LIVE DATABASE — edits are real. Be careful."
+    )
+    print(
+        f"\n  DuckDB UI:  http://localhost:{args.port}"
+        f"\n  Database:   {target}"
+        f"\n  {safety}"
+        "\n  Ctrl+C to close.\n",
+        flush=True,
+    )
+    try:
+        while True:
+            time.sleep(3600)
+    except KeyboardInterrupt:
+        print("closed")
+    finally:
+        con.close()
+    return 0
 
 
 def cmd_dashboard(args) -> int:
@@ -367,6 +434,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="fail unless an ambiguous gate has been routed to review (dry-run acceptance)",
     )
     v.set_defaults(func=cmd_verify)
+    br = common(sub.add_parser("browse", help="open the dataset in DuckDB's web UI"))
+    br.add_argument("--port", type=int, default=4213, help="port for the DuckDB UI (default 4213)")
+    br.add_argument(
+        "--live",
+        action="store_true",
+        help="browse the live database instead of a snapshot (blocks the runner)",
+    )
+    br.set_defaults(func=cmd_browse)
+
     dash = common(sub.add_parser("dashboard", help="launch Streamlit"))
     dash.add_argument("--port", type=int, default=8501, help="port to serve on (default 8501)")
     dash.set_defaults(func=cmd_dashboard)
@@ -389,7 +465,7 @@ def main(argv: list[str] | None = None) -> int:
     for attr, default in (("dry_run", False), ("mock", False), ("limit", None),
                           ("max_cost", None), ("watch", False), ("note", None),
                           ("seed", False), ("plan", False),
-                          ("require_review_queue", False), ("port", 8501)):
+                          ("require_review_queue", False), ("port", 8501), ("live", False)):
         if not hasattr(args, attr):
             setattr(args, attr, default)
     return args.func(args)

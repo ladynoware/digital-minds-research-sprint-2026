@@ -126,6 +126,25 @@ queue end to end. Uses a separate database and raw log
 real run. Add `--mock` to rehearse with no API calls at all.
 
 ```bash
+python -m whoami browse --dry-run
+```
+Opens the dataset in **DuckDB's own web UI** at http://localhost:4213 — schema
+tree, SQL editor, result grids, CSV/Parquet export. Everything runs locally
+against the local file; the MotherDuck sign-in the UI offers is optional and not
+needed.
+
+It browses a **snapshot copy**, not the live database. DuckDB allows one
+read-write process and otherwise only readers, so holding the real file open
+would stop a fleet from starting, and a live fleet would stop the browser from
+opening; the snapshot sidesteps both. It also means nothing done in the UI can
+reach the real dataset. `--live` overrides this — it works, but blocks the
+runner and edits real rows.
+
+(The UI needs write access to create its own `_duckdb_ui` state catalog, which
+is why the snapshot is opened read-write. Saved notebooks live in that catalog
+and are discarded when the snapshot is refreshed.)
+
+```bash
 python -m whoami dashboard --dry-run
 ```
 Serves at **http://localhost:8501** (`--port` to change it). Drop `--dry-run` to
