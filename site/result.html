@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Result — Who Am I?</title>
+    <link rel="stylesheet" href="assets/theme.css" />
+    <link rel="stylesheet" href="assets/site.css" />
+  </head>
+  <body>
+    <div class="banner" id="mock-banner" hidden></div>
+
+    <header class="masthead">
+      <div class="wrap masthead__inner">
+        <a class="masthead__title" href="index.html">Who Am I? <span>— locating the self in LLMs</span></a>
+        <nav class="nav">
+          <a href="index.html" aria-current="page">Results</a>
+          <a href="messages.html">Messages</a>
+          <a href="qualitative.html">Qualitative</a>
+        </nav>
+      </div>
+    </header>
+
+    <!--
+      Every numeric result on the site is this one page. It reads
+      results_manifest.json, finds ?id=, and renders whatever it finds — so a
+      new result is a manifest entry, never a new HTML file.
+    -->
+    <main class="wrap" id="result-root">
+      <p class="loading">Loading…</p>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <p id="foot-stamp">Who Am I? — Digital Minds Research Sprint, August 2026.</p>
+      </div>
+    </footer>
+
+    <script src="assets/data.js"></script>
+    <script src="assets/chart.js"></script>
+    <script src="assets/result.js"></script>
+  </body>
+</html>

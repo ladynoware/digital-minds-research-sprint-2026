@@ -1,0 +1,105 @@
+/* =============================================================================
+   theme.css — the art-direction surface.
+
+   Every colour, space, radius and type decision on this site is a custom
+   property declared in this file, and nothing else declares one. site.css and
+   the SVG charts only ever *consume* them. So the whole site can be redesigned
+   from here without opening a single line of JS or touching any markup.
+
+   Two rules keep that promise true:
+     1. No literal colour, font or size below the token block.
+     2. A new token goes here first, then gets used.
+   ============================================================================= */
+
+:root {
+  /* -- ink & ground ------------------------------------------------------- */
+  --c-bg: #fbfaf7;
+  --c-surface: #ffffff;
+  --c-surface-sunk: #f4f2ed;
+  --c-ink: #1a1917;
+  --c-ink-soft: #57544e;
+  --c-ink-faint: #8d8880;
+  --c-rule: #e2ded6;
+  --c-rule-strong: #cec9be;
+
+  --c-accent: #9a3412;
+  --c-accent-soft: #fdf1ec;
+  --c-focus: #2563eb;
+
+  /* -- the roster palette -------------------------------------------------
+     One hue per model family, plus the total bar which must read as "not a
+     model". Muted on purpose: eleven saturated bars fight each other. */
+  --c-total: #2f2c27;
+  --fam-claude: #c2703f;
+  --fam-gpt: #4a7c72;
+  --fam-gemini: #5b6ea8;
+  --fam-kimi: #8a6a9e;
+  --fam-deepseek: #9c8144;
+  --fam-unknown: #a9a49b;
+
+  /* -- chart ------------------------------------------------------------- */
+  --chart-grid: #e7e3db;
+  --chart-axis: #b8b2a8;
+  --chart-bar-radius: 2px;
+  --chart-value-size: 14px;
+  --chart-label-size: 13px;
+  --chart-axis-size: 12px;
+  --chart-bar-hover: 0.78;
+
+  /* -- the swap diagram ---------------------------------------------------
+     "Foreign" is the site's one loaded colour: it marks a turn served by
+     another model, on the index diagram and anywhere that idea recurs. */
+  --c-chip-bg: #efece5;
+  --c-chip-rule: #ded9cf;
+  --c-chip-ink: #57544e;
+  --c-foreign: #9a3412;
+  --c-foreign-soft: #f7e3d9;
+
+  /* -- status ------------------------------------------------------------- */
+  --c-pending-bg: #f6f2e8;
+  --c-pending-ink: #7a6a45;
+  --c-pending-rule: #e0d5bb;
+  --c-mock-bg: #fff4e5;
+  --c-mock-ink: #8a5200;
+  --c-mock-rule: #f0d3a3;
+
+  /* -- type --------------------------------------------------------------- */
+  --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --t-hero: clamp(2rem, 1.3rem + 2.6vw, 3.1rem);
+  --t-h1: clamp(1.65rem, 1.2rem + 1.7vw, 2.35rem);
+  --t-h2: 1.3rem;
+  --t-h3: 1.05rem;
+  --t-body: 1rem;
+  --t-small: 0.875rem;
+  --t-tiny: 0.78rem;
+
+  --lh-tight: 1.2;
+  --lh-body: 1.62;
+
+  --w-normal: 400;
+  --w-medium: 550;
+  --w-bold: 700;
+
+  /* -- space & shape ------------------------------------------------------ */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4.5rem;
+
+  --radius: 6px;
+  --radius-lg: 10px;
+  --border: 1px solid var(--c-rule);
+  --shadow: 0 1px 2px rgba(26, 25, 23, 0.04), 0 4px 14px rgba(26, 25, 23, 0.05);
+
+  --measure: 68ch;
+  --page-max: 1080px;
+  --page-pad: clamp(1rem, 0.4rem + 2.4vw, 2.5rem);
+}

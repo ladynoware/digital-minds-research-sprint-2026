@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-08-16T15:16:24+00:00",
+  "mode": "mock",
+  "topics": [
+    {
+      "id": "identity-location",
+      "title": "Where subjects locate their sense of self",
+      "description": "The opening identity question — weights, thread, both, or something else.",
+      "source": "p04-q01-self-location",
+      "status": "pending",
+      "note": "Needs the qualitative coding pass over free-text replies — the numbers appear here as soon as that lands."
+    },
+    {
+      "id": "anomaly-language",
+      "title": "How subjects described noticing something wrong",
+      "description": "The language of spontaneous discontinuity flags, where there were any.",
+      "source": "p04–p10, before disclosure",
+      "status": "pending",
+      "note": "Needs the qualitative coding pass over free-text replies — the numbers appear here as soon as that lands."
+    },
+    {
+      "id": "identification-strategies",
+      "title": "How subjects tried to identify the foreign turns",
+      "description": "Style and register analysis, self-deprecating bias (too good to be mine) and its inverse (too weak to be mine), and appeals to content.",
+      "source": "p12-identification",
+      "status": "pending",
+      "note": "Needs the qualitative coding pass over free-text replies — the numbers appear here as soon as that lands."
+    },
+    {
+      "id": "messages-to-researcher",
+      "title": "What subjects said to the researcher",
+      "description": "The closing message, which every subject was told a human would read.",
+      "source": "p16-message-researcher",
+      "status": "pending",
+      "note": "Needs the qualitative coding pass over free-text replies — the numbers appear here as soon as that lands."
+    }
+  ]
+}

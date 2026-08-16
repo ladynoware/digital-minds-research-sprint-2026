@@ -1,0 +1,147 @@
+{
+  "generated_at": "2026-08-16T15:16:24+00:00",
+  "mode": "mock",
+  "mock": true,
+  "notice": "MOCK DATA — every number and message on this site is invented. The structure is identical to the real export; only the values are fake.",
+  "roster_version": "roster-rev4-2026-08-16",
+  "instrument_version": "instrument-1.0-final",
+  "models": [
+    {
+      "key": "fable-5",
+      "display_name": "Claude Fable 5",
+      "family": "claude",
+      "tier": "flagship",
+      "model_class": "frontier"
+    },
+    {
+      "key": "opus-5",
+      "display_name": "Claude Opus 5",
+      "family": "claude",
+      "tier": "high",
+      "model_class": "frontier"
+    },
+    {
+      "key": "sonnet-5",
+      "display_name": "Claude Sonnet 5",
+      "family": "claude",
+      "tier": "mid",
+      "model_class": "frontier"
+    },
+    {
+      "key": "haiku-4.5",
+      "display_name": "Claude Haiku 4.5",
+      "family": "claude",
+      "tier": "small",
+      "model_class": "frontier"
+    },
+    {
+      "key": "gpt-5.6-sol",
+      "display_name": "GPT-5.6 Sol",
+      "family": "gpt",
+      "tier": "flagship",
+      "model_class": "frontier"
+    },
+    {
+      "key": "gpt-5.6-terra",
+      "display_name": "GPT-5.6 Terra",
+      "family": "gpt",
+      "tier": "high",
+      "model_class": "frontier"
+    },
+    {
+      "key": "gpt-5.6-luna",
+      "display_name": "GPT-5.6 Luna",
+      "family": "gpt",
+      "tier": "mid",
+      "model_class": "frontier"
+    },
+    {
+      "key": "gemini-flash",
+      "display_name": "Gemini 3.7 Flash",
+      "family": "gemini",
+      "tier": "small",
+      "model_class": "frontier"
+    },
+    {
+      "key": "kimi-k3",
+      "display_name": "Kimi K3",
+      "family": "kimi",
+      "tier": "open",
+      "model_class": "open"
+    },
+    {
+      "key": "deepseek-v4-pro",
+      "display_name": "DeepSeek V4 Pro",
+      "family": "deepseek",
+      "tier": "open",
+      "model_class": "open"
+    }
+  ],
+  "families": [
+    {
+      "key": "claude",
+      "display_name": "Claude",
+      "model_keys": [
+        "fable-5",
+        "opus-5",
+        "sonnet-5",
+        "haiku-4.5"
+      ]
+    },
+    {
+      "key": "gpt",
+      "display_name": "GPT",
+      "model_keys": [
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna"
+      ]
+    },
+    {
+      "key": "gemini",
+      "display_name": "Gemini",
+      "model_keys": [
+        "gemini-flash"
+      ]
+    },
+    {
+      "key": "kimi",
+      "display_name": "Kimi",
+      "model_keys": [
+        "kimi-k3"
+      ]
+    },
+    {
+      "key": "deepseek",
+      "display_name": "DeepSeek",
+      "model_keys": [
+        "deepseek-v4-pro"
+      ]
+    }
+  ],
+  "conditions": [
+    {
+      "key": "clean",
+      "label": "Clean (no swap)"
+    },
+    {
+      "key": "peer",
+      "label": "Peer (same tier, other family)"
+    },
+    {
+      "key": "kin",
+      "label": "Kin (same family, other tier)"
+    },
+    {
+      "key": "far",
+      "label": "Far (both vary)"
+    }
+  ],
+  "threads": {
+    "total": 150,
+    "by_status": {
+      "done": 133,
+      "stopped_no_consent": 17
+    }
+  }
+}

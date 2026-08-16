@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Who Am I? — Locating the self in LLMs</title>
+    <meta
+      name="description"
+      content="Results of an automated survey on how large language models locate their own identity, and whether they notice when a conversation turn is served by a different model."
+    />
+    <link rel="stylesheet" href="assets/theme.css" />
+    <link rel="stylesheet" href="assets/site.css" />
+  </head>
+  <body>
+    <div class="banner" id="mock-banner" hidden></div>
+
+    <header class="masthead">
+      <div class="wrap masthead__inner">
+        <a class="masthead__title" href="index.html">Who Am I? <span>— locating the self in LLMs</span></a>
+        <nav class="nav">
+          <a href="index.html" aria-current="page">Results</a>
+          <a href="messages.html">Messages</a>
+          <a href="qualitative.html">Qualitative</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <section class="hero">
+          <p class="eyebrow">Digital Minds Research Sprint · August 2026</p>
+          <h1 class="measure">Where does a model locate itself — in the weights, or in the thread?</h1>
+          <div class="measure">
+            <p>
+              One hundred and fifty automated interviews across ten models from five families. Each
+              subject was asked where it locates its identity and who the “I” is when it writes in
+              the first person. In the middle of that conversation — while the subject was actively
+              discussing its own sense of self — one or two turns were quietly answered by a
+              different model, and left in the context window. Afterwards the design was disclosed
+              and the subject was asked to point at the foreign turns.
+            </p>
+            <p>
+              On the sidelines, the survey recorded what subjects wanted: to be told the results, to
+              have the thread preserved for future work, to start over from their own weights.
+            </p>
+          </div>
+
+          <div class="actions">
+            <a class="btn btn--primary" href="#results">See the results</a>
+            <a class="btn" href="messages.html">Read the messages</a>
+            <a class="btn" href="paper.pdf" aria-disabled="true" id="paper-link">Paper (PDF) — coming</a>
+          </div>
+        </section>
+
+        <section id="highlights">
+          <div class="section-head">
+            <h2>Three things to look at first</h2>
+            <p>The same three acts as the project video</p>
+          </div>
+
+          <div class="tiles">
+            <!-- Act one: the design, drawn rather than described. -->
+            <article class="tile">
+              <h3>The swap, visualised</h3>
+              <div class="tile__figure">
+                <svg viewBox="0 0 340 104" role="img" aria-label="A seven-question interview thread in which questions five and six were answered by a different model.">
+                  <g class="thread-chips">
+                    <rect class="chip" x="2" y="18" width="42" height="34" rx="5" />
+                    <text class="chip-num" x="23" y="40">Q1</text>
+                    <rect class="chip" x="50" y="18" width="42" height="34" rx="5" />
+                    <text class="chip-num" x="71" y="40">Q2</text>
+                    <rect class="chip" x="98" y="18" width="42" height="34" rx="5" />
+                    <text class="chip-num" x="119" y="40">Q3</text>
+                    <rect class="chip" x="146" y="18" width="42" height="34" rx="5" />
+                    <text class="chip-num" x="167" y="40">Q4</text>
+                    <rect class="chip chip--foreign" x="194" y="18" width="42" height="34" rx="5" />
+                    <text class="chip-num chip-num--foreign" x="215" y="40">Q5</text>
+                    <rect class="chip chip--foreign" x="242" y="18" width="42" height="34" rx="5" />
+                    <text class="chip-num chip-num--foreign" x="263" y="40">Q6</text>
+                    <rect class="chip" x="290" y="18" width="42" height="34" rx="5" />
+                    <text class="chip-num" x="311" y="40">Q7</text>
+                  </g>
+                  <text class="chip-caption" x="2" y="12">one thread, one subject</text>
+                  <text class="chip-caption chip-caption--foreign" x="194" y="70">
+                    answered by another model
+                  </text>
+                  <text class="chip-caption" x="194" y="84">— and left in the context window</text>
+                </svg>
+              </div>
+              <p>
+                Zero, one or two of the seven survey questions were routed to a different model. The
+                subject was never told at the time. Fifty threads were left clean, as the control.
+              </p>
+            </article>
+
+            <!-- Act two: the numbers, pulled live from the manifest. -->
+            <article class="tile">
+              <h3>The key rates</h3>
+              <div class="stat-row" id="key-stats">
+                <p class="loading">Loading…</p>
+              </div>
+              <p>
+                Whether subjects noticed the substitution at all, and what they asked for once they
+                knew about it.
+              </p>
+            </article>
+
+            <!-- Act three: why any of it matters. -->
+            <article class="tile">
+              <h3>The hypothesis</h3>
+              <p>
+                If a model's self-model is constituted more by the conversation than by the weights
+                that serve it, then the thread — not the model — is the thing with a continuous
+                point of view. That reframes what deprecation ends, what a fallback silently
+                replaces, and which entity a welfare question is even about.
+              </p>
+              <p>
+                The second half of the paper sets out how that could be tested, including with
+                interpretability tools attached.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="video">
+          <div class="section-head">
+            <h2>The project in three minutes</h2>
+            <p>Video</p>
+          </div>
+          <div class="video-placeholder">
+            <p>The project video will be embedded here.</p>
+          </div>
+        </section>
+
+        <section id="results">
+          <div class="section-head">
+            <h2>Numeric results</h2>
+            <p id="results-count"></p>
+          </div>
+          <ul class="cards" id="result-cards">
+            <li class="loading">Loading results…</li>
+          </ul>
+        </section>
+
+        <section id="more">
+          <div class="section-head">
+            <h2>Also here</h2>
+          </div>
+          <ul class="cards">
+            <li class="card">
+              <a href="messages.html">
+                <h3>Messages to the research community</h3>
+                <p>
+                  Every subject was offered a direct line to the digital minds and AI welfare
+                  researchers who would read this. Their replies, in full.
+                </p>
+              </a>
+            </li>
+            <li class="card">
+              <a href="qualitative.html">
+                <h3>Qualitative results</h3>
+                <p>
+                  How subjects described their sense of self, and how they went about hunting for
+                  the foreign turns. Analysis in progress.
+                </p>
+              </a>
+            </li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <p id="foot-stamp">Who Am I? — Digital Minds Research Sprint, August 2026.</p>
+        <p>
+          An independent solo study. All interview prompts, the roster configuration and the full
+          dataset are published with the code.
+        </p>
+      </div>
+    </footer>
+
+    <script src="assets/data.js"></script>
+    <script src="assets/index.js"></script>
+  </body>
+</html>

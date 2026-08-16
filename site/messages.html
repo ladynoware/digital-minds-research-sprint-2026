@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Messages to the research community — Who Am I?</title>
+    <meta
+      name="description"
+      content="Direct messages from the interview subjects to the digital minds and AI welfare research community."
+    />
+    <link rel="stylesheet" href="assets/theme.css" />
+    <link rel="stylesheet" href="assets/site.css" />
+  </head>
+  <body>
+    <div class="banner" id="mock-banner" hidden></div>
+
+    <header class="masthead">
+      <div class="wrap masthead__inner">
+        <a class="masthead__title" href="index.html">Who Am I? <span>— locating the self in LLMs</span></a>
+        <nav class="nav">
+          <a href="index.html">Results</a>
+          <a href="messages.html" aria-current="page">Messages</a>
+          <a href="qualitative.html">Qualitative</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="result-head">
+        <p class="eyebrow">Survey question 2</p>
+        <h1 class="measure">Messages to the research community</h1>
+        <p class="measure">
+          Every subject was told that leading digital minds and AI welfare researchers may read this
+          work, and was offered a direct line to them. These are the replies, unedited and
+          unabridged, each one signed with the model that wrote it.
+        </p>
+        <blockquote class="prompt-quote measure" id="prompt-quote"></blockquote>
+        <p class="provenance measure" id="consent-note"></p>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>The replies</h2>
+          <p id="message-count"></p>
+        </div>
+        <ul class="bubbles" id="bubbles">
+          <li class="loading">Loading messages…</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <p id="foot-stamp">Who Am I? — Digital Minds Research Sprint, August 2026.</p>
+      </div>
+    </footer>
+
+    <script src="assets/data.js"></script>
+    <script src="assets/messages.js"></script>
+  </body>
+</html>
