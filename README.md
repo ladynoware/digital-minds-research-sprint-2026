@@ -91,6 +91,14 @@ activate it, call the interpreter directly instead: `.\.venv\Scripts\python.exe
 ## Commands
 
 ```bash
+python -m whoami check
+```
+Pre-flight. Confirms both configs parse, reports whether the instrument is
+locked, and asks OpenRouter whether the key is live — reporting the key's usage,
+limit and tier. This queries the key endpoint, not a model, so it costs nothing
+and consumes no free-tier allowance. Run it before the dry run.
+
+```bash
 python -m whoami matrix --plan
 ```
 Prints every design cell — resident, condition, honest label, understudy, n —
@@ -285,6 +293,7 @@ and roster growth.
 
 ## Run order
 
+0. `whoami check` — configs parse, key is live. Costs nothing.
 1. `whoami dryrun --mock` — rehearse the machinery offline, free.
 2. `whoami dryrun` — 2 threads on the free tier (50 calls/day; the two threads
    plus router calls use roughly 40).

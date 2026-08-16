@@ -118,6 +118,67 @@ def cmd_verify(args) -> int:
     return 0 if report.passed else 1
 
 
+def cmd_check(args) -> int:
+    """Pre-flight: configs load, key is present and live. Costs nothing."""
+    ok = True
+
+    try:
+        cfg = _config(args)
+        print(f"[PASS] configs load")
+        print(f"       roster     {cfg.roster.version} ({len(cfg.roster.models)} models)")
+        print(f"       instrument {cfg.instrument.version} (locked={cfg.instrument.locked})")
+        if not cfg.instrument.locked:
+            print("       note: unlocked — live runs are blocked until `locked: true`")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[FAIL] configs: {type(exc).__name__}: {exc}")
+        return 1
+
+    _load_env()
+    key = os.environ.get("OPENROUTER_API_KEY")
+    env_file = REPO_ROOT / ".env"
+    if not key:
+        print("[FAIL] OPENROUTER_API_KEY is not set")
+        print(f"       put it in {env_file}")
+        return 1
+    if key.startswith("sk-or-v1-...") or key.endswith("..."):
+        print(f"[FAIL] OPENROUTER_API_KEY is still the placeholder — edit {env_file}")
+        return 1
+    print(f"[PASS] OPENROUTER_API_KEY present ({len(key)} chars, ends {key[-4:]})")
+
+    # /key reports the key's own limits and usage. It is not an inference call,
+    # so this costs nothing and consumes no free-tier allowance.
+    import httpx
+
+    base = cfg.roster.api.get("base_url", "https://openrouter.ai/api/v1")
+    try:
+        resp = httpx.get(
+            f"{base}/key", headers={"Authorization": f"Bearer {key}"}, timeout=30
+        )
+    except httpx.HTTPError as exc:
+        print(f"[FAIL] could not reach OpenRouter: {exc}")
+        return 1
+    if resp.status_code != 200:
+        print(f"[FAIL] OpenRouter rejected the key (HTTP {resp.status_code}): {resp.text[:200]}")
+        return 1
+
+    data = resp.json().get("data", {})
+    limit, usage = data.get("limit"), data.get("usage")
+    print("[PASS] key accepted by OpenRouter")
+    print(f"       label       {data.get('label') or '(none)'}")
+    print(f"       usage       ${float(usage or 0):.4f}")
+    print(f"       limit       {('$%.2f' % limit) if limit is not None else 'unlimited / credit balance'}")
+    if limit is not None:
+        print(f"       remaining   ${float(limit) - float(usage or 0):.4f}")
+    if data.get("is_free_tier"):
+        print("       tier        FREE — only `:free` models will run (dry run only)")
+    else:
+        print("       tier        paid — the full roster is available")
+
+    print()
+    print("Ready." if ok else "Problems above.")
+    return 0 if ok else 1
+
+
 def cmd_dashboard(args) -> int:
     app = REPO_ROOT / "dashboard" / "app.py"
     env = dict(os.environ)
@@ -296,6 +357,7 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--plan", action="store_true", help="also list threads that would be created")
     m.set_defaults(func=cmd_matrix)
 
+    common(sub.add_parser("check", help="pre-flight: configs + API key")).set_defaults(func=cmd_check)
     common(sub.add_parser("seed", help="create missing threads")).set_defaults(func=cmd_seed)
     common(sub.add_parser("status", help="progress and cost")).set_defaults(func=cmd_status)
     v = common(sub.add_parser("verify", help="data-integrity checks"))
