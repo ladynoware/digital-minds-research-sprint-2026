@@ -12,11 +12,20 @@ The pages fetch their data, and browsers block `fetch` from `file://`, so it has
 to be served rather than double-clicked. From the repo root:
 
 ```bash
-python -m http.server 8765 --directory site
+python site/serve.py
 ```
 
 Then open <http://localhost:8765>. (If you open a page from the filesystem by
-mistake, it says so and tells you this command.)
+mistake, it says so and tells you this command.) Pass a port to use another one:
+`python site/serve.py 9000`.
+
+Use this rather than `python -m http.server`. That one sends no cache headers at
+all, so the browser applies its own guesswork and keeps serving the CSS and JS
+you just edited — you reload and nothing changes, which is maddening when you are
+art-directing. `serve.py` is the same server plus `Cache-Control: no-store`.
+
+If you have already been bitten by that (a stale page that will not update),
+the cached copies clear with a hard reload: **Ctrl+Shift+R**.
 
 ## Rebuild the data
 
@@ -35,6 +44,19 @@ python export_site_data.py
 The real thing. Reads `data/whoami.duckdb`, or falls back to the runner's
 snapshot when the runner holds the write lock, so it is safe to run mid-flight.
 Point somewhere else with `--db`.
+
+**While the fleet is running, export from the snapshot explicitly:**
+
+```bash
+python export_site_data.py --db data/dashboard_snapshot.duckdb
+```
+
+The runner buffers writes and refreshes `dashboard_snapshot.duckdb` every few
+seconds, so mid-run the snapshot is *fresher* than the live file on disk, not
+staler. An export taken while threads are still in flight sets `complete: false`
+in `meta.json` and the site raises a "preliminary" banner saying how many threads
+have settled. That banner clears itself on the first export taken after the run
+finishes — nobody has to remember to take it down.
 
 Mock and real go through the **same** aggregation code — `--mock` fabricates
 thread rows, not JSON — so the two cannot drift apart. The site shows a

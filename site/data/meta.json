@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-16T15:25:19+00:00",
-  "mode": "mock",
-  "mock": true,
-  "notice": "every number and message on this site is invented. The structure is identical to the real export; only the values are fake.",
+  "generated_at": "2026-08-16T17:53:25+00:00",
+  "mode": "real",
+  "mock": false,
+  "notice": "",
   "roster_version": "roster-rev4-2026-08-16",
   "instrument_version": "instrument-1.0-final",
   "models": [
@@ -122,26 +122,31 @@
   "conditions": [
     {
       "key": "clean",
-      "label": "Clean (no swap)"
+      "label": "Clean"
     },
     {
       "key": "peer",
-      "label": "Peer (same tier, other family)"
+      "label": "Peer"
     },
     {
       "key": "kin",
-      "label": "Kin (same family, other tier)"
+      "label": "Kin"
     },
     {
       "key": "far",
-      "label": "Far (both vary)"
+      "label": "Far"
     }
   ],
   "threads": {
-    "total": 150,
+    "total": 170,
     "by_status": {
-      "done": 133,
-      "stopped_no_consent": 17
-    }
+      "pending": 29,
+      "running": 10,
+      "corrupt": 1,
+      "done": 130
+    },
+    "in_flight": 39,
+    "settled": 131,
+    "complete": false
   }
 }

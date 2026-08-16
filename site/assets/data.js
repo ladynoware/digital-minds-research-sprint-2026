@@ -53,20 +53,43 @@ const WhoAmI = (() => {
   }
 
   /**
-   * The mock banner. Every page calls this; it only appears while the data on
-   * disk came from `--mock`, and vanishes by itself on the first real export.
+   * The state-of-the-data banner. Two states, both self-clearing:
+   *   mock         — the data came from `--mock`. Gone on the first real export.
+   *   preliminary  — real data, but the run has threads still in flight. Gone
+   *                  on the export taken after the run settles.
+   * Neither has to be switched off by hand, which is the point: nobody has to
+   * remember to remove a warning before the site is shown to anyone.
    */
   async function mountBanner() {
     const banner = document.getElementById("mock-banner");
     if (!banner) return;
     try {
       const meta = await load("meta");
-      if (!meta.mock) return;
-      banner.innerHTML = "";
-      banner.append(
-        el("div", { class: "wrap" }, el("strong", { text: "Mock data · " }), meta.notice)
-      );
-      banner.hidden = false;
+      const threads = meta.threads || {};
+
+      if (meta.mock) {
+        banner.innerHTML = "";
+        banner.append(
+          el("div", { class: "wrap" }, el("strong", { text: "Mock data · " }), meta.notice)
+        );
+        banner.hidden = false;
+        return;
+      }
+
+      if (threads.complete === false) {
+        banner.classList.add("banner--prelim");
+        banner.innerHTML = "";
+        banner.append(
+          el(
+            "div",
+            { class: "wrap" },
+            el("strong", { text: "Preliminary · " }),
+            `the run is still going. ${threads.settled} of ${threads.total} threads have settled, ` +
+              `${threads.in_flight} are still in flight, and every rate on this site will move.`
+          )
+        );
+        banner.hidden = false;
+      }
     } catch {
       /* the page's own error handling will report a failed load */
     }

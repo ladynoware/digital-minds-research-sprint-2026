@@ -63,6 +63,15 @@
   --c-mock-ink: #8a5200;
   --c-mock-rule: #f0d3a3;
 
+  /* Preliminary reads as "not finished yet", not as "not real" — so it is a
+     cool, calmer note than the amber mock warning. */
+  --c-prelim-bg: #eef3fa;
+  --c-prelim-ink: #2c4a6e;
+  --c-prelim-rule: #c6d8ec;
+
+  /* how far a long message is folded before "show the whole message" */
+  --msg-clamp: 15em;
+
   /* -- type --------------------------------------------------------------- */
   --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
   --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,

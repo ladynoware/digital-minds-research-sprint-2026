@@ -74,6 +74,12 @@ button:focus-visible {
   display: none;
 }
 
+.banner--prelim {
+  background: var(--c-prelim-bg);
+  color: var(--c-prelim-ink);
+  border-bottom-color: var(--c-prelim-rule);
+}
+
 /* -- masthead -------------------------------------------------------------- */
 
 .masthead {
@@ -680,9 +686,69 @@ tbody tr:last-child td {
   margin-left: auto;
 }
 
-.bubble__text {
+/* Replies are rendered from Markdown into real blocks, so the spacing lives on
+   the children rather than on a pre-wrap block. */
+.bubble__text > :first-child {
+  margin-top: 0;
+}
+
+.bubble__text > :last-child {
+  margin-bottom: 0;
+}
+
+.bubble__text p {
   margin: 0 0 var(--s-3);
-  white-space: pre-wrap;
+}
+
+.msg-heading {
+  margin-top: var(--s-4);
+}
+
+.msg-list {
+  margin: 0 0 var(--s-3);
+  padding-left: var(--s-5);
+}
+
+.msg-list li {
+  margin-bottom: var(--s-2);
+}
+
+.bubble__text code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--c-surface-sunk);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+/* Folded, never truncated: the whole reply is in the DOM either way. */
+.bubble__text.is-clamped {
+  max-height: var(--msg-clamp);
+  overflow: hidden;
+  position: relative;
+}
+
+.bubble__text.is-clamped::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 4em;
+  background: linear-gradient(to bottom, transparent, var(--c-surface));
+  pointer-events: none;
+}
+
+.bubble__more {
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-accent);
+  font-family: var(--font-body);
+  font-size: var(--t-small);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .bubble__meta {

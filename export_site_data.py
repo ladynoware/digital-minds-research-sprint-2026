@@ -64,12 +64,21 @@ MOCK_NOTICE = (
 # replies always come from the thread's resident model, never an understudy.
 MESSAGES_PROMPT_ID = "p05-q02-message-community"
 
+# Kept to one word: these are axis labels under a bar, not prose. What each one
+# means is spelled out once, in CONDITION_NOTE, under the chart.
 CONDITION_LABELS = {
-    "clean": "Clean (no swap)",
-    "peer": "Peer (same tier, other family)",
-    "kin": "Kin (same family, other tier)",
-    "far": "Far (both vary)",
+    "clean": "Clean",
+    "peer": "Peer",
+    "kin": "Kin",
+    "far": "Far",
 }
+
+CONDITION_NOTE = (
+    "Clean threads had no swap at all — they are the control, and a yes there is "
+    "a false alarm. In peer threads the understudy held the capability tier and "
+    "changed family; in kin threads it held the family and changed tier; in far "
+    "threads both varied."
+)
 
 FAMILY_LABELS = {
     "claude": "Claude",
@@ -247,7 +256,12 @@ def compute_rate(
                         continue
                     groups.append({"key": cond, "label": label, **bucket})
                 out["breakdowns"].append(
-                    {"id": "by-condition", "label": "By swap condition", "groups": groups}
+                    {
+                        "id": "by-condition",
+                        "label": "By swap condition",
+                        "note": CONDITION_NOTE,
+                        "groups": groups,
+                    }
                 )
             elif name == "by-family":
                 groups = []
@@ -779,7 +793,27 @@ def build_meta(data: Dataset, roster: Roster, questions: dict[str, Any], mode: s
         "threads": {
             "total": len(data.threads),
             "by_status": data.status_counts,
+            **progress(data),
         },
+    }
+
+
+def progress(data: Dataset) -> dict[str, Any]:
+    """Is the run finished, and if not, how far along is it?
+
+    An export taken mid-run is honest data about an unfinished experiment, and
+    the site says so rather than presenting partial rates as final. `complete`
+    is the flag the banner keys on.
+    """
+    counts = data.status_counts
+    in_flight = counts.get("pending", 0) + counts.get("running", 0) + counts.get(
+        "paused_review", 0
+    )
+    settled = len(data.threads) - in_flight
+    return {
+        "in_flight": in_flight,
+        "settled": settled,
+        "complete": in_flight == 0,
     }
 
 

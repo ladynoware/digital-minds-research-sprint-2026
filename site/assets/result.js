@@ -122,7 +122,8 @@
         "section",
         {},
         el("div", { class: "section-head" }, el("h2", { text: breakdown.label })),
-        el("div", { class: "chart" }, Chart.fromBreakdown(breakdown, result))
+        el("div", { class: "chart" }, Chart.fromBreakdown(breakdown, result)),
+        breakdown.note ? el("p", { class: "chart-note", text: breakdown.note }) : null
       )
     );
   }

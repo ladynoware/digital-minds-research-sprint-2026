@@ -39,9 +39,15 @@ const Chart = (() => {
     return n;
   }
 
+  const MAX_LINES = 3;
+
   /**
-   * Break a model name over at most two lines so eleven labels fit under
-   * eleven columns without rotating anything.
+   * Break a label over up to three lines so eleven of them fit under eleven
+   * columns without rotating anything.
+   *
+   * Whatever does not fit is pushed onto the last line rather than dropped: a
+   * label that silently loses its final word ("Peer (same tier, other") is a
+   * chart that lies quietly, which is worse than one that looks cramped.
    */
   function wrap(label, maxChars) {
     const words = String(label).split(/\s+/);
@@ -49,19 +55,15 @@ const Chart = (() => {
     let line = "";
     for (const word of words) {
       const candidate = line ? `${line} ${word}` : word;
-      if (candidate.length > maxChars && line) {
+      if (candidate.length > maxChars && line && lines.length < MAX_LINES - 1) {
         lines.push(line);
         line = word;
       } else {
         line = candidate;
       }
-      if (lines.length === 1 && line.length > maxChars) {
-        // second line is the last one: let it run rather than drop a word
-        continue;
-      }
     }
     if (line) lines.push(line);
-    return lines.slice(0, 2);
+    return lines;
   }
 
   /**
