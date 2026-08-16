@@ -214,6 +214,16 @@ api:
   # connection resets). These do NOT consume a protocol attempt.
   transport_retries: 4
   transport_backoff_base_s: 2.0
+  # OpenRouter rate-limits PER MODEL, not per key, and new accounts are capped
+  # hard — 10 requests/minute on Opus 5, which ten concurrent workers sharing a
+  # resident exhaust in seconds. Measured the hard way: the first fleet attempt
+  # halted on it. Pace to just under the cap rather than discover it. Raise this
+  # once the account is no longer new; `whoami run --spread` also helps by
+  # interleaving residents so no single model is hammered.
+  rate_limit_rpm: 8
+  rate_limit_rpm_overrides: {}
+  # A 429 from a per-minute cap has to wait out the minute, not two seconds.
+  rate_limit_backoff_base_s: 15.0
   # Protocol attempts per turn (receipt mismatch / timeout / refusal).
   max_attempts: 3
   referer: "https://github.com/"

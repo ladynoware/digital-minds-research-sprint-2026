@@ -26,6 +26,7 @@ from typing import Any
 import httpx
 from openai import AsyncOpenAI, APIConnectionError, APIStatusError, APITimeoutError
 
+from .ratelimit import ModelRateLimiter
 from .rawlog import RawLog
 
 
@@ -77,6 +78,10 @@ class OpenRouterClient:
             raise RuntimeError(
                 "OPENROUTER_API_KEY is not set. Put it in the environment or in a .env file."
             )
+        self.limiter = ModelRateLimiter(
+            api_cfg.get("rate_limit_rpm"),
+            api_cfg.get("rate_limit_rpm_overrides") or {},
+        )
         self.client = AsyncOpenAI(
             api_key=key,
             base_url=api_cfg.get("base_url", "https://openrouter.ai/api/v1"),
@@ -133,6 +138,8 @@ class OpenRouterClient:
 
         for transport_attempt in range(max_transport + 1):
             try:
+                # Pace to the per-model budget before spending a request.
+                await self.limiter.acquire(model)
                 resp = await self.client.chat.completions.create(
                     model=model,
                     messages=messages,  # type: ignore[arg-type]
@@ -240,7 +247,14 @@ class OpenRouterClient:
                 )
                 if retryable and transport_attempt < max_transport:
                     # Back off only on genuine rate-limit / transient errors.
-                    delay = backoff_base * (2**transport_attempt)
+                    # A 429 from a per-minute cap needs to wait out the minute,
+                    # not a couple of seconds, so it gets its own larger base.
+                    base = (
+                        float(self.cfg.get("rate_limit_backoff_base_s", 15.0))
+                        if status == 429
+                        else backoff_base
+                    )
+                    delay = base * (2**transport_attempt)
                     delay *= 0.5 + random.random()  # jitter, avoids thundering herd
                     await asyncio.sleep(delay)
                     continue

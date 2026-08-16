@@ -965,6 +965,49 @@ def test_verify_passes_on_a_synthetic_run(cfg, paths):
     assert report.passed, report.render()
 
 
+def test_rate_limiter_paces_per_model():
+    """Budget is per model, so one busy model must not throttle the others."""
+    from whoami.ratelimit import ModelRateLimiter
+
+    async def scenario():
+        limiter = ModelRateLimiter(default_rpm=3, overrides={"vendor/fast": 100})
+        # Three calls fit the window; each returns without waiting.
+        for _ in range(3):
+            assert await limiter.acquire("vendor/slow") == 0.0
+        # A different model has its own window and is unaffected.
+        for _ in range(10):
+            assert await limiter.acquire("vendor/fast") == 0.0
+        # An unlimited model never blocks.
+        unlimited = ModelRateLimiter(default_rpm=None)
+        assert await unlimited.acquire("vendor/anything") == 0.0
+
+    asyncio.run(scenario())
+
+
+def test_rate_limiter_blocks_the_fourth_call(monkeypatch):
+    """The fourth call inside the window waits for the first to age out."""
+    from whoami import ratelimit
+
+    slept: list[float] = []
+
+    async def fake_sleep(d):
+        slept.append(d)
+        # Pretend the window advanced past the oldest entry.
+        ratelimit.time.monotonic = lambda base=ratelimit.time.monotonic(): base + 61
+
+    monkeypatch.setattr(ratelimit.asyncio, "sleep", fake_sleep)
+
+    async def scenario():
+        limiter = ratelimit.ModelRateLimiter(default_rpm=3)
+        for _ in range(3):
+            await limiter.acquire("vendor/slow")
+        waited = await limiter.acquire("vendor/slow")
+        assert waited > 0, "the fourth call must wait"
+        assert slept, "it must actually sleep rather than spin"
+
+    asyncio.run(scenario())
+
+
 def test_concurrent_snapshots_do_not_collide(cfg, paths):
     """The runner and the dashboard both refresh the snapshot.
 
