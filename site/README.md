@@ -82,12 +82,18 @@ decides geometry only; it sets no fill, stroke or font.
 
 ## The pages
 
+Menu order is Home · Numerical Results · Qualitative Results · Messages.
+
 | File | What it is |
 | --- | --- |
-| `index.html` | Blurb, video slot, paper link, three highlight tiles, results directory |
+| `index.html` | Home: blurb, paper link, three highlight tiles, video slot |
+| `results.html` | The numeric-results directory, generated from the manifest |
 | `result.html?id=…` | The one numeric-result template, driven by the manifest |
-| `messages.html` | Community messages (survey question 2) as chat bubbles |
 | `qualitative.html` | The coding topics, as stubs |
+| `messages.html` | Community messages (survey question 2) as chat bubbles |
+
+Each page loads `assets/data.js` and then its own script of the same name.
+The home page's only data dependency is the three headline rates.
 
 ## Deploying later
 

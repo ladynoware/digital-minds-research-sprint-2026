@@ -263,6 +263,16 @@ section {
   padding-top: var(--s-2);
 }
 
+.stat__link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.stat__link:hover .stat__value {
+  color: var(--c-accent);
+}
+
 .stat__value {
   font-family: var(--font-display);
   font-size: 1.7rem;

@@ -39,7 +39,7 @@
             : "This page needs a result id, for example result.html?id=consent-rate",
         })
       ),
-      el("p", {}, el("a", { href: "index.html", text: "← All results" }))
+      el("p", {}, el("a", { href: "results.html", text: "← All results" }))
     );
     return;
   }
@@ -198,7 +198,7 @@
       { class: "pager", "aria-label": "Other results" },
       prev
         ? el("a", { href: `result.html?id=${prev.id}`, text: `← ${prev.title}` })
-        : el("a", { href: "index.html", text: "← All results" }),
+        : el("a", { href: "results.html", text: "← All results" }),
       next ? el("a", { href: `result.html?id=${next.id}`, text: `${next.title} →` }) : el("span", {})
     );
   }

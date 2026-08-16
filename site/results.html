@@ -3,7 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Result — Who Am I?</title>
+    <title>Numerical results — Who Am I?</title>
+    <meta
+      name="description"
+      content="Every numeric result of the Who Am I? survey: detection rates, consent, and what subjects asked for once the design was disclosed."
+    />
     <link rel="stylesheet" href="assets/theme.css" />
     <link rel="stylesheet" href="assets/site.css" />
   </head>
@@ -22,13 +26,26 @@
       </div>
     </header>
 
-    <!--
-      Every numeric result on the site is this one page. It reads
-      results_manifest.json, finds ?id=, and renders whatever it finds — so a
-      new result is a manifest entry, never a new HTML file.
-    -->
-    <main class="wrap" id="result-root">
-      <p class="loading">Loading…</p>
+    <main class="wrap">
+      <section class="result-head">
+        <p class="eyebrow">Rates and per-model breakdowns</p>
+        <h1 class="measure">Numerical results</h1>
+        <p class="measure">
+          Every result below is a rate across the same 150 threads, broken down by each of the ten
+          models in the roster. Results still being coded from free-text replies are listed here too,
+          marked as such, rather than left out.
+        </p>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>All results</h2>
+          <p id="results-count"></p>
+        </div>
+        <ul class="cards" id="result-cards">
+          <li class="loading">Loading results…</li>
+        </ul>
+      </section>
     </main>
 
     <footer class="foot">
@@ -38,7 +55,6 @@
     </footer>
 
     <script src="assets/data.js"></script>
-    <script src="assets/chart.js"></script>
-    <script src="assets/result.js"></script>
+    <script src="assets/results.js"></script>
   </body>
 </html>
