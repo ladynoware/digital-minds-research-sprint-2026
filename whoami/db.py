@@ -12,13 +12,18 @@ See ``snapshot()`` and ``drain_inbox()``.
 
 from __future__ import annotations
 
+import itertools
 import json
-import shutil
+import os
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import duckdb
+
+# Distinguishes concurrent snapshot writes inside one process.
+_snapshot_seq = itertools.count()
 
 THREAD_STATUSES = (
     "pending",
@@ -147,6 +152,7 @@ class Database:
         if not read_only:
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self.con = duckdb.connect(str(self.path), read_only=read_only)
+        self._snapshot_lock = threading.Lock()
         if not read_only:
             self.con.execute(SCHEMA)
 
@@ -339,16 +345,31 @@ class Database:
         """
         dest = Path(dest)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        tmp = dest.with_suffix(dest.suffix + ".tmp")
-        if tmp.exists():
-            tmp.unlink()
-        src = self.con.execute("SELECT current_database()").fetchone()[0]
-        self.con.execute(f"ATTACH '{tmp.as_posix()}' AS snapshot_target")
+        # Unique per writer: the runner and the dashboard both refresh this, and
+        # a shared temp name means one can move the file out from under the
+        # other mid-copy. Seen in practice as a FileNotFoundError in the
+        # dashboard while a run was in flight.
+        seq = next(_snapshot_seq)
+        tmp = dest.with_suffix(f"{dest.suffix}.{os.getpid()}.{seq}.tmp")
+        # The attach alias must be unique too — two overlapping snapshots on one
+        # connection would otherwise collide on the catalog name.
+        alias = f"snapshot_target_{os.getpid()}_{seq}"
         try:
-            self.con.execute(f'COPY FROM DATABASE "{src}" TO snapshot_target')
+            # Serialised: ATTACH/COPY/DETACH is a three-step transaction on a
+            # shared connection, and interleaving two of them corrupts both.
+            with self._snapshot_lock:
+                src = self.con.execute("SELECT current_database()").fetchone()[0]
+                self.con.execute(f"ATTACH '{tmp.as_posix()}' AS {alias}")
+                try:
+                    self.con.execute(f'COPY FROM DATABASE "{src}" TO {alias}')
+                finally:
+                    self.con.execute(f"DETACH {alias}")
+            # os.replace is atomic within a filesystem, so a reader either sees
+            # the old snapshot or the new one, never a half-written file.
+            os.replace(tmp, dest)
         finally:
-            self.con.execute("DETACH snapshot_target")
-        shutil.move(str(tmp), str(dest))
+            if tmp.exists():
+                tmp.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------

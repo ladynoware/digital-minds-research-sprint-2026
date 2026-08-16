@@ -965,6 +965,40 @@ def test_verify_passes_on_a_synthetic_run(cfg, paths):
     assert report.passed, report.render()
 
 
+def test_concurrent_snapshots_do_not_collide(cfg, paths):
+    """The runner and the dashboard both refresh the snapshot.
+
+    A shared temp filename let one move the file out from under the other, which
+    surfaced as a FileNotFoundError crashing the dashboard mid-run.
+    """
+    import threading
+
+    with Database(paths.db_path) as db:
+        seed_thread(db, cfg, "T9106")
+        errors: list[Exception] = []
+
+        def snap():
+            try:
+                for _ in range(5):
+                    db.snapshot(paths.snapshot)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        threads = [threading.Thread(target=snap) for _ in range(4)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert not errors, f"snapshot raced: {errors}"
+        assert paths.snapshot.exists()
+        leftovers = list(paths.snapshot.parent.glob("*.tmp"))
+        assert not leftovers, f"temp files left behind: {leftovers}"
+        # And the snapshot is a readable database, not a half-written file.
+        with Database(paths.snapshot, read_only=True) as snap_db:
+            assert snap_db.get_thread("T9106") is not None
+
+
 def test_a_rate_limit_halts_the_run_without_corrupting_threads(cfg, paths):
     """A daily cap must leave everything resumable, not spend attempts against a wall."""
     from whoami.client import CallResult

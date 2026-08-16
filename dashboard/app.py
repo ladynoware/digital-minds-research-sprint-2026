@@ -51,10 +51,23 @@ st.set_page_config(page_title="Who Am I? — run dashboard", layout="wide")
 # ---------------------------------------------------------------------------
 
 
+SNAPSHOT_MAX_AGE_S = 4
+
+
 def refresh_snapshot_if_possible() -> str:
-    """Try to refresh the snapshot ourselves; harmless if the runner holds the lock."""
+    """Try to refresh the snapshot ourselves; harmless if the runner holds the lock.
+
+    Never fatal. The dashboard's job is to show progress and take adjudications;
+    a failed refresh means slightly staler numbers, not a broken page. A live
+    runner refreshes the snapshot itself every few seconds anyway.
+    """
     if not PATHS.db_path.exists():
         return "no database yet"
+    if PATHS.snapshot.exists():
+        age = time.time() - PATHS.snapshot.stat().st_mtime
+        if age < SNAPSHOT_MAX_AGE_S:
+            # Fresh enough — don't fight the runner for the write lock.
+            return f"snapshot is {age:.0f}s old"
     try:
         with Database(PATHS.db_path) as db:
             applied = drain_inbox(db, PATHS.inbox, PATHS.inbox_marker)
@@ -62,6 +75,8 @@ def refresh_snapshot_if_possible() -> str:
         return f"refreshed directly (applied {len(applied)} adjudication(s))"
     except duckdb.Error:
         return "runner holds the database — reading its snapshot"
+    except OSError as exc:
+        return f"refresh skipped ({type(exc).__name__}) — reading the last snapshot"
 
 
 def source_path() -> Path | None:
