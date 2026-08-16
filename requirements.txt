@@ -1,0 +1,11 @@
+# Who Am I? — experiment runner
+duckdb>=1.5
+openai>=3.0          # OpenAI-compatible client, pointed at OpenRouter
+streamlit>=1.60      # dashboard: progress grid + review queue
+pyyaml>=6.0          # the instrument and roster configs
+httpx>=0.28          # timeout control for the API client
+python-dotenv>=1.0   # OPENROUTER_API_KEY from .env
+pandas>=2.0          # dashboard tables
+
+# development
+pytest>=8.0

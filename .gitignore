@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Secrets — never commit
+.env
+
+# Working data. The published dataset is exported deliberately, not by accident:
+# raw transcripts contain full model replies and are released with the paper.
+data/*.duckdb
+data/*.duckdb.tmp
+data/*.duckdb.wal
+data/raw/
+data/raw_dryrun/
+data/*.jsonl
+data/.adjudications*
+
+!data/.gitkeep
