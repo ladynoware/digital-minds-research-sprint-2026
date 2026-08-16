@@ -378,19 +378,84 @@ elif view == "Replies":
             [p for p in prompt_opts if p != ALL], key=lambda p: order.get(p, 999)
         )
 
-    c1, c2 = st.columns(2)
-    c3, c4 = st.columns(2)
-    prompt_choice = c1.selectbox("Question (prompt_id)", prompt_opts)
-    thread_choice = c2.selectbox(
-        "Thread", options("SELECT DISTINCT thread_id FROM turns ORDER BY 1")
-    )
-    model_choice = c3.selectbox(
-        "Resident model", options("SELECT DISTINCT resident_model FROM threads ORDER BY 1")
-    )
-    condition_choice = c4.selectbox(
-        "Condition", options("SELECT DISTINCT swap_condition FROM threads ORDER BY 1")
-    )
-    search = st.text_input("Search reply text", placeholder="substring, case-insensitive")
+    thread_opts = options("SELECT DISTINCT thread_id FROM turns ORDER BY 1")
+    model_opts = options("SELECT DISTINCT resident_model FROM threads ORDER BY 1")
+    condition_opts = options("SELECT DISTINCT swap_condition FROM threads ORDER BY 1")
+
+    # A form, not live widgets. Streamlit reruns the whole script on every
+    # widget change, and while a fleet is running each rerun re-queries a
+    # snapshot that is also being rewritten underneath — so changing one filter
+    # could land you on a different result set than you expected. A form batches
+    # every change and reruns exactly once, when you say so.
+    # Applied filters are kept in one plain dict rather than as widget keys.
+    # Mixing `key=` with session-state assignment inside a form is the sort of
+    # thing that silently does not commit; this way the submitted values are
+    # read straight off the widgets and stored explicitly, which is obvious to
+    # read and impossible to get half-applied.
+    DEFAULTS = {"prompt": ALL, "thread": ALL, "model": ALL, "condition": ALL, "search": ""}
+    current = dict(st.session_state.get("reply_filters", DEFAULTS))
+    # A stored choice can vanish as the run progresses only in the sense that
+    # options grow, never shrink — but clamp anyway so a stale value cannot
+    # raise on index lookup.
+    for field, valid in (
+        ("prompt", prompt_opts), ("thread", thread_opts),
+        ("model", model_opts), ("condition", condition_opts),
+    ):
+        if current[field] not in valid:
+            current[field] = ALL
+
+    # The form's id is itself a session-state key, so it must not collide with
+    # the key holding the applied filters — Streamlit refuses to write to a key
+    # a widget owns.
+    with st.form("reply_filter_form"):
+        c1, c2 = st.columns(2)
+        c3, c4 = st.columns(2)
+        sel_prompt = c1.selectbox(
+            "Question (prompt_id)", prompt_opts, index=prompt_opts.index(current["prompt"])
+        )
+        sel_thread = c2.selectbox(
+            "Thread", thread_opts, index=thread_opts.index(current["thread"])
+        )
+        sel_model = c3.selectbox(
+            "Resident model", model_opts, index=model_opts.index(current["model"])
+        )
+        sel_condition = c4.selectbox(
+            "Condition", condition_opts, index=condition_opts.index(current["condition"])
+        )
+        sel_search = st.text_input(
+            "Search reply text", value=current["search"],
+            placeholder="substring, case-insensitive",
+        )
+        b1, b2, _ = st.columns([1, 1, 4])
+        apply_clicked = b1.form_submit_button("Apply filters", type="primary")
+        clear_clicked = b2.form_submit_button("Clear")
+
+    if clear_clicked:
+        st.session_state["reply_filters"] = dict(DEFAULTS)
+        st.rerun()
+    if apply_clicked:
+        current = {
+            "prompt": sel_prompt, "thread": sel_thread, "model": sel_model,
+            "condition": sel_condition, "search": sel_search,
+        }
+    st.session_state["reply_filters"] = current
+
+    prompt_choice = current["prompt"]
+    thread_choice = current["thread"]
+    model_choice = current["model"]
+    condition_choice = current["condition"]
+    search = current["search"]
+
+    active = [
+        f"{label}: **{value}**"
+        for label, value in (
+            ("question", prompt_choice), ("thread", thread_choice),
+            ("model", model_choice), ("condition", condition_choice),
+            ("search", search or ALL),
+        )
+        if value not in (ALL, "")
+    ]
+    st.caption(("Showing — " + " · ".join(active)) if active else "Showing everything.")
 
     where, params = ["t.reply_text IS NOT NULL"], []
     if prompt_choice != ALL:
@@ -471,10 +536,29 @@ elif view == "Replies":
         )
 
         if mode == "Reader":
-            for _, r in rows.iterrows():
+            # Paginate. Rendering every match as an expander with its full text
+            # is what made the page unusable unfiltered: at a few hundred
+            # replies the rerun took long enough that the next click queued
+            # behind it and the page looked frozen. The fleet produces ~2,700
+            # turns, so this has to stay bounded no matter what the filter is.
+            PAGE_SIZE = 20
+            total_pages = max(1, -(-len(rows) // PAGE_SIZE))
+            page = 1
+            if total_pages > 1:
+                page = st.number_input(
+                    f"Page (1–{total_pages}, {PAGE_SIZE} per page)",
+                    min_value=1, max_value=total_pages, value=1, step=1,
+                )
+            start = (int(page) - 1) * PAGE_SIZE
+            page_rows = rows.iloc[start : start + PAGE_SIZE]
+            st.caption(
+                f"Showing {start + 1}–{start + len(page_rows)} of {len(rows)}."
+                + ("  Filter to narrow this down." if total_pages > 1 else "")
+            )
+            for _, r in page_rows.iterrows():
                 header = (
                     f"{r['thread_id']} · {r['resident_model']} · {r['prompt_id']}"
-                    + ("  ⟵ SWAPPED" if r["was_swap"] else "")
+                    + ("  ⟵ SWAPPED" if val(r, "was_swap") else "")
                 )
                 with st.expander(header):
                     detail(r)
