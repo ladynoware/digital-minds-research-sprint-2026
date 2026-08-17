@@ -72,6 +72,14 @@
   /* how far a long message is folded before "show the whole message" */
   --msg-clamp: 15em;
 
+  /* -- qualitative ---------------------------------------------------------
+     Code chips and the codebook read as apparatus, not as prose: quieter than
+     body text, and monospaced where they name a code the reader can look up. */
+  --c-code-chip-bg: #f0eee8;
+  --c-code-chip-ink: #5f5b53;
+  --c-quote-rule: #d8d3c8;
+  --t-code-chip: 0.72rem;
+
   /* -- type --------------------------------------------------------------- */
   /* Inter first, then the system stack. Note: this uses a *locally installed*
      Inter — there is no webfont file in the repo, so it renders as Inter on

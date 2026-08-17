@@ -1,8 +1,9 @@
 /* =============================================================================
-   qualitative.js — the stub list.
+   qualitative.js — the directory of qualitative topics.
 
    Same manifest pattern as the numeric results: topics come from
-   qualitative.json, so filling one in after the coding pass is a re-export.
+   qualitative.json, so a topic the analysis fills in later becomes a linked
+   card here on the next export, with no edit to any HTML file.
    ============================================================================= */
 
 (async () => {
@@ -21,19 +22,72 @@
     return;
   }
 
+  const ready = data.topics.filter((t) => t.status === "ready").length;
+  const countEl = document.getElementById("topic-count");
+  if (countEl) {
+    countEl.textContent =
+      ready === data.topics.length
+        ? `${ready} topics`
+        : `${ready} of ${data.topics.length} coded`;
+  }
+
+  // The method, stated once on the directory rather than repeated on every
+  // topic: how a count got made is part of what a count means.
+  const methodBox = document.getElementById("method");
+  if (methodBox && data.method) {
+    methodBox.innerHTML = "";
+    methodBox.append(
+      el("h2", { text: "How the coding was done" }),
+      el("p", { class: "measure", text: data.method.name + "." }),
+      el(
+        "ol",
+        { class: "method-stages measure" },
+        (data.method.stages || []).map((s) => el("li", { text: s }))
+      ),
+      data.method.note ? el("p", { class: "chart-note measure", text: data.method.note }) : null
+    );
+  }
+
   cards.innerHTML = "";
   for (const topic of data.topics) {
+    const pending = topic.status !== "ready";
+
+    if (pending) {
+      cards.append(
+        el(
+          "li",
+          { class: "card card--pending" },
+          el(
+            "a",
+            { href: `topic.html?id=${topic.id}` },
+            el("span", { class: "pill", text: "Analysis in progress" }),
+            el("h3", { text: topic.title }),
+            el("p", { text: topic.description })
+          )
+        )
+      );
+      continue;
+    }
+
+    const n = topic.counts.overall.n;
+    const top = Object.entries(topic.counts.overall.pct)
+      .filter(([code]) => code !== "other")
+      .slice(0, 1)[0];
+
     cards.append(
       el(
         "li",
-        { class: "card card--pending" },
+        { class: "card" },
         el(
-          "div",
-          { style: "padding: var(--s-5); display:flex; flex-direction:column; gap: var(--s-2)" },
-          el("span", { class: "pill", text: "Analysis in progress" }),
+          "a",
+          { href: `topic.html?id=${topic.id}` },
+          el("span", { class: "card__value", text: `${n} replies` }),
           el("h3", { text: topic.title }),
           el("p", { text: topic.description }),
-          el("p", { class: "provenance" }, "From: ", el("code", { text: topic.source }))
+          top
+            ? el("p", { class: "card__lead" }, `Most common: `, el("code", { text: top[0] }), ` — ${top[1]}%`)
+            : null,
+          topic.light_touch ? el("span", { class: "pill pill--quiet", text: "Curated for reading" }) : null
         )
       )
     );

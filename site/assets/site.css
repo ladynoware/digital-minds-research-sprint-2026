@@ -628,6 +628,219 @@ tbody tr:last-child td {
   background: var(--fam-deepseek);
 }
 
+/* -- qualitative ----------------------------------------------------------- */
+
+.prose p {
+  margin: 0 0 var(--s-4);
+}
+
+.prose h3,
+.prose h4 {
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  margin: var(--s-5) 0 var(--s-3);
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--c-surface-sunk);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+.notice-inline {
+  background: var(--c-pending-bg);
+  border-left: 3px solid var(--c-pending-rule);
+  color: var(--c-pending-ink);
+  padding: var(--s-3) var(--s-4);
+  font-size: var(--t-small);
+  margin: var(--s-4) 0 0;
+  max-width: var(--measure);
+}
+
+.method {
+  border-top: var(--border);
+  padding-top: var(--s-4);
+}
+
+.method h2 {
+  font-size: var(--t-h2);
+  margin-bottom: var(--s-3);
+}
+
+.method-stages {
+  font-size: var(--t-small);
+  color: var(--c-ink-soft);
+  padding-left: var(--s-5);
+}
+
+.method-stages li {
+  margin-bottom: var(--s-2);
+}
+
+.card__lead {
+  font-size: var(--t-small);
+  color: var(--c-ink-faint);
+}
+
+.card__lead code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.pill--quiet {
+  background: transparent;
+  color: var(--c-ink-faint);
+  border-color: var(--c-rule);
+}
+
+/* horizontal bar rows carry their label on the left, not underneath */
+.chart .bar-label--row {
+  font-family: var(--font-mono);
+  font-size: var(--t-code-chip);
+}
+
+.chart .bar-value--row {
+  text-anchor: start;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.table-scroll table {
+  min-width: 520px;
+}
+
+.table-scroll td:first-child {
+  font-family: var(--font-mono);
+  font-size: var(--t-code-chip);
+}
+
+/* -- quotes ---------------------------------------------------------------- */
+
+.quotes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--s-4);
+}
+
+.quote {
+  background: var(--c-surface);
+  border: var(--border);
+  border-left: 3px solid var(--c-quote-rule);
+  border-radius: var(--radius-lg);
+  padding: var(--s-4) var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.quote--claude {
+  border-left-color: var(--fam-claude);
+}
+.quote--gpt {
+  border-left-color: var(--fam-gpt);
+}
+.quote--gemini {
+  border-left-color: var(--fam-gemini);
+}
+.quote--kimi {
+  border-left-color: var(--fam-kimi);
+}
+.quote--deepseek {
+  border-left-color: var(--fam-deepseek);
+}
+
+.quote__text {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
+.quote__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  font-size: var(--t-tiny);
+  color: var(--c-ink-faint);
+  border-top: var(--border);
+  padding-top: var(--s-2);
+}
+
+.quote__model {
+  color: var(--c-ink);
+  font-weight: var(--w-medium);
+}
+
+.quote__meta code {
+  font-family: var(--font-mono);
+}
+
+.quote__flag {
+  color: var(--c-accent);
+}
+
+.quote__codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+
+.code-chip {
+  font-family: var(--font-mono);
+  font-size: var(--t-code-chip);
+  background: var(--c-code-chip-bg);
+  color: var(--c-code-chip-ink);
+  border-radius: 3px;
+  padding: 1px var(--s-2);
+}
+
+/* -- codebook -------------------------------------------------------------- */
+
+.codebook-box {
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  padding: var(--s-4) var(--s-5);
+  margin-top: var(--s-5);
+}
+
+.codebook-box summary {
+  cursor: pointer;
+  font-weight: var(--w-medium);
+  font-size: var(--t-small);
+}
+
+.codebook {
+  margin: var(--s-4) 0 0;
+  font-size: var(--t-small);
+}
+
+.codebook dt {
+  font-family: var(--font-mono);
+  font-size: var(--t-code-chip);
+  color: var(--c-ink);
+  margin-top: var(--s-3);
+}
+
+.codebook dd {
+  margin: var(--s-1) 0 0;
+  color: var(--c-ink-soft);
+}
+
+.codebook__rules-head {
+  font-family: var(--font-body);
+  font-size: var(--t-small);
+  font-weight: var(--w-medium);
+  margin: var(--s-5) 0 var(--s-2);
+}
+
 /* -- pending state --------------------------------------------------------- */
 
 .pending {

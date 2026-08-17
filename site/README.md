@@ -132,8 +132,15 @@ resolve under a domain root or a project subpath alike.
 | `index.html` | Home: blurb, paper link, three highlight tiles, video slot |
 | `results.html` | The numeric-results directory, generated from the manifest |
 | `result.html?id=…` | The one numeric-result template, driven by the manifest |
-| `qualitative.html` | The coding topics, as stubs |
+| `qualitative.html` | The qualitative directory, generated from `qualitative.json` |
+| `topic.html?id=…` | The one qualitative-result template |
 | `messages.html` | Community messages (survey question 2) as chat bubbles |
+
+`qualitative.json` is written by the analysis package (`python -m analysis
+export`), not by `export_site_data.py` — the two write different files into the
+same `site/data/` directory and do not touch each other's. A topic filled in
+later becomes a linked card and a full page on the next export, with no edit
+here.
 
 Each page loads `assets/data.js` and then its own script of the same name.
 The home page's only data dependency is the three headline rates.

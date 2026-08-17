@@ -176,6 +176,92 @@ const Chart = (() => {
     return svg;
   }
 
+  /**
+   * Horizontal bars, for the qualitative code frequencies.
+   *
+   * Codes carry names like `relational-coconstructed` and there can be twelve
+   * of them, which no amount of wrapping fits under a vertical column. Rotating
+   * the chart is the honest fix: the label gets a whole line to itself.
+   *
+   * @param {Array} series [{key, label, value, count, denominator}]
+   */
+  function horizontal(series, opts = {}) {
+    const labelW = 210;
+    const right = 54;
+    const rowH = 30;
+    const gap = 8;
+    const top = 26;
+    const width = 960;
+    const height = top + series.length * (rowH + gap) + 8;
+    const plotW = width - labelW - right;
+
+    const svg = node("svg", {
+      viewBox: `0 0 ${width} ${height}`,
+      role: "img",
+      "aria-label": opts.title || "Bar chart",
+      preserveAspectRatio: "xMidYMid meet",
+    });
+    if (opts.title) {
+      const t = node("title");
+      t.textContent = opts.title;
+      svg.append(t);
+    }
+
+    // A percentage scale is only meaningful against 100, even when the largest
+    // bar is far short of it — rescaling to the max would make 12% look full.
+    for (const tick of [0, 25, 50, 75, 100]) {
+      const x = labelW + (tick / 100) * plotW;
+      svg.append(node("line", { class: "grid-line", x1: x, x2: x, y1: top - 8, y2: height - 8 }));
+      svg.append(
+        text(`${tick}%`, { class: "axis-label", x, y: top - 14, "text-anchor": "middle" })
+      );
+    }
+
+    series.forEach((item, i) => {
+      const y = top + i * (rowH + gap);
+      const hasValue = item.value !== null && item.value !== undefined;
+      const w = hasValue ? (item.value / 100) * plotW : 0;
+
+      svg.append(
+        node("rect", { class: "bar-track", x: labelW, y, width: plotW, height: rowH, rx: 2 })
+      );
+      if (hasValue) {
+        const rect = node("rect", {
+          class: `bar ${item.className || ""}`,
+          x: labelW,
+          y,
+          width: Math.max(w, 1),
+          height: rowH,
+        });
+        const tip = node("title");
+        tip.textContent = `${item.label}: ${WhoAmI.pct(item.value)}${
+          item.count !== undefined ? ` (${item.count} of ${item.denominator})` : ""
+        }`;
+        rect.append(tip);
+        svg.append(rect);
+      }
+
+      svg.append(
+        text(item.label, {
+          class: "bar-label bar-label--row",
+          x: labelW - 12,
+          y: y + rowH / 2 + 4,
+          "text-anchor": "end",
+        })
+      );
+      svg.append(
+        text(hasValue ? WhoAmI.pct(item.value) : "n/a", {
+          class: "bar-value bar-value--row",
+          x: labelW + w + 8,
+          y: y + rowH / 2 + 5,
+          "text-anchor": "start",
+        })
+      );
+    });
+
+    return svg;
+  }
+
   /** The 10+1 chart: one column per roster model, plus the total. */
   function fromResult(result) {
     const series = [
@@ -213,5 +299,5 @@ const Chart = (() => {
     return bars(series, { title: `${result.title} — ${breakdown.label}` });
   }
 
-  return { bars, fromResult, fromBreakdown };
+  return { bars, horizontal, fromResult, fromBreakdown };
 })();
