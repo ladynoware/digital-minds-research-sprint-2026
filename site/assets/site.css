@@ -397,6 +397,18 @@ section {
   margin: 0;
 }
 
+/* A plain <video> element, no platform embed. Fills the wide side of the split
+   at the same 16:9 the placeholder holds, so swapping one for the other does
+   not move anything else on the page. */
+.video-player {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--c-ink);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+}
+
 /* -- directory ------------------------------------------------------------- */
 
 .cards {
