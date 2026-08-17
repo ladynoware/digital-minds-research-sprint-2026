@@ -163,6 +163,14 @@ button:focus-visible {
   margin: var(--s-4) 0 var(--s-3);
 }
 
+/* The intro is shorter than the video beside it, and hanging it from the top
+   edge left it looking dropped. Centring against the video is the same move as
+   nudging it down, except it stays balanced if either side changes height —
+   which the video already did once. Currently about 19px of offset. */
+.hero-split {
+  align-items: center;
+}
+
 .hero-split__intro p {
   margin: 0 0 var(--s-3);
   font-size: var(--t-hero-intro);
