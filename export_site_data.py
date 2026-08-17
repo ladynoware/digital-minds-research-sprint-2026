@@ -1132,6 +1132,7 @@ def build_index(data: Dataset, roster: Roster, questions: dict[str, Any], mode: 
         ],
         "source": {
             "repository": "https://github.com/ladynoware/digital-minds-research-sprint-2026",
+            "paper": "../who-am-i-paper.pdf",
             "export_script": "export_site_data.py",
             "instrument": "config/questions.yaml",
             "roster": "config/models.yaml",
