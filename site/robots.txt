@@ -1,0 +1,17 @@
+# Who Am I? — Digital Minds Research Sprint, August 2026
+#
+# This is a weekend proof-of-concept whose results are still settling. It should
+# not surface in search as though it were finished work, so every page carries
+# <meta name="robots" content="noindex, nofollow">.
+#
+# Crawling is deliberately NOT blocked here. A crawler has to fetch a page to
+# see the noindex tag on it; disallowing the whole site would hide the very
+# instruction that keeps it out of the index, and the URLs could still be listed
+# without it.
+#
+# The PDF is the exception: it cannot carry a meta tag, and the header that
+# would do the same job (X-Robots-Tag) is not settable on GitHub Pages. So it is
+# disallowed here, which is the only lever available for it.
+
+User-agent: *
+Disallow: /who-am-i-paper.pdf
