@@ -50,9 +50,22 @@
             </div>
 
             <div class="hero-split__media">
-              <div class="video-placeholder">
-                <p>Video is uploading.</p>
-              </div>
+              <!-- A plain video element: no platform, no embed, no third-party
+                   script. preload="metadata" so the page does not pull 28 MB
+                   before anyone presses play. -->
+              <video
+                class="video-player"
+                controls
+                preload="metadata"
+                playsinline
+                aria-label="The project in three minutes"
+              >
+                <source src="who-am-i-video.mp4" type="video/mp4" />
+                <p>
+                  Your browser cannot play this video.
+                  <a href="who-am-i-video.mp4">Download it instead</a>.
+                </p>
+              </video>
             </div>
           </div>
 
