@@ -227,6 +227,13 @@ section {
   margin-top: var(--s-5);
 }
 
+/* Sitting under the tiles rather than under a column of text, so it centres
+   on the page instead of hanging off the left edge. */
+.actions--centred {
+  justify-content: center;
+  margin-top: var(--s-6);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
