@@ -99,6 +99,10 @@
   --t-tiny: 0.78rem;
   /* message bubbles read as quoted material, a step down from body copy */
   --t-message: 0.925rem;
+  /* the hero intro sits in a third-width column against the video, so it is
+     set smaller and tighter to come out level with it rather than overrun */
+  --t-hero-intro: 0.875rem;
+  --lh-hero-intro: 1.5;
 
   --lh-tight: 1.2;
   --lh-body: 1.62;

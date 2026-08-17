@@ -158,14 +158,18 @@ button:focus-visible {
 }
 
 .hero-split__intro p {
-  margin: 0 0 var(--s-4);
+  margin: 0 0 var(--s-3);
+  font-size: var(--t-hero-intro);
+  line-height: var(--lh-hero-intro);
 }
 
 .hero-split__intro p:last-child {
   margin-bottom: 0;
 }
 
-@media (max-width: 900px) {
+/* Below ~1000px the third-width column gets narrow enough that the intro runs
+   taller than the video beside it, so stack instead of leaving a ragged row. */
+@media (max-width: 1000px) {
   .hero-split {
     grid-template-columns: 1fr;
     gap: var(--s-5);
