@@ -26,6 +26,7 @@
 
   const HEADLINES = [
     ["swap-detection-accuracy", "guessed the swap correctly"],
+    ["wants-thread-restored", "asked to start over on their own weights"],
     ["wants-results", "wanted to see the results"],
     ["wants-future-preservation", "wanted the thread preserved"],
   ];

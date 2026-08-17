@@ -117,14 +117,9 @@ const WhoAmI = (() => {
     );
   }
 
-  function stamp(meta) {
-    const when = new Date(meta.generated_at);
-    const date = Number.isNaN(when.getTime())
-      ? meta.generated_at
-      : when.toISOString().slice(0, 16).replace("T", " ") + " UTC";
-    return `Data exported ${date} · roster ${meta.roster_version} · instrument ${meta.instrument_version}`;
-  }
-
+  // No export stamp in the footer: the export time, roster version and
+  // instrument version are build detail, useful while testing and noise to a
+  // reader. They are still in meta.json for anyone who wants them.
   async function mountFooter() {
     const foot = document.getElementById("foot-stamp");
     if (!foot) return;
@@ -141,12 +136,6 @@ const WhoAmI = (() => {
           "."
         )
       );
-    }
-
-    try {
-      foot.textContent = stamp(await load("meta"));
-    } catch {
-      /* leave the static fallback text in place */
     }
   }
 

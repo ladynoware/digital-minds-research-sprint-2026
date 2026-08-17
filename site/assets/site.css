@@ -300,10 +300,12 @@ section {
 }
 
 /* the three big numbers inside the "key rates" tile */
+/* Two by two. With four rates, an auto-fit row lands on three-plus-one, which
+   reads as a mistake rather than as a grid. */
 .stat-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s-3);
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-4) var(--s-4);
 }
 
 .stat {
