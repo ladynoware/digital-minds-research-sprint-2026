@@ -1097,7 +1097,7 @@ def build_index(data: Dataset, roster: Roster, questions: dict[str, Any], mode: 
     """
     prog = progress(data)
     return {
-        "name": "Who Am I? — Locating the self in LLMs",
+        "name": "Who Am I? Exploring the concept of identity in LLMs",
         "description": (
             "An automated survey of how large language models locate their own identity, "
             "in which 0-2 turns of each interview were served by a different model and "

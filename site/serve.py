@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import sys
 from functools import partial
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 SITE_DIR = Path(__file__).resolve().parent
@@ -44,7 +44,13 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
 def main(argv: list[str]) -> int:
     port = int(argv[1]) if len(argv) > 1 else DEFAULT_PORT
     handler = partial(NoCacheHandler, directory=str(SITE_DIR))
-    server = HTTPServer(("localhost", port), handler)
+    # Threading, not plain HTTPServer: browsers open several parallel
+    # connections and hold them open with keep-alive, and a single-threaded
+    # server serves one at a time — so one idle connection wedges the whole
+    # site and every later request hangs. That is not a hypothetical; it
+    # happened.
+    server = ThreadingHTTPServer(("localhost", port), handler)
+    server.daemon_threads = True
     print(f"Serving {SITE_DIR.name}/ at http://localhost:{port}  (Ctrl+C to stop)")
     try:
         server.serve_forever()

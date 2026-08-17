@@ -146,6 +146,32 @@ button:focus-visible {
   margin: 0 0 var(--s-4);
 }
 
+/* Headline full width, then intro at a third against video at two thirds, then
+   the links under both. Collapses to one column before the video gets too
+   small to be worth watching. */
+.hero-split {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--s-6);
+  align-items: start;
+  margin-top: var(--s-5);
+}
+
+.hero-split__intro p {
+  margin: 0 0 var(--s-4);
+}
+
+.hero-split__intro p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .hero-split {
+    grid-template-columns: 1fr;
+    gap: var(--s-5);
+  }
+}
+
 .eyebrow {
   font-size: var(--t-tiny);
   letter-spacing: 0.13em;

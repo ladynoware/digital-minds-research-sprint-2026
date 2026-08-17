@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17T11:57:01+00:00",
+  "generated_at": "2026-08-17T12:00:38+00:00",
   "mode": "real",
   "mock": false,
   "notice": "",
@@ -140,8 +140,8 @@
   "threads": {
     "total": 174,
     "by_status": {
-      "done": 173,
-      "corrupt": 1
+      "corrupt": 1,
+      "done": 173
     },
     "in_flight": 0,
     "settled": 174,

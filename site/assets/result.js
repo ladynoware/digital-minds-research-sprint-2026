@@ -52,7 +52,7 @@
   const head = el(
     "div",
     { class: "result-head" },
-    el("p", { class: "eyebrow", text: "Numeric result" }),
+    el("p", { class: "eyebrow", text: "Quantitative result" }),
     el("h1", { class: "measure", text: result.title }),
     el("p", { class: "measure", text: result.description })
   );
