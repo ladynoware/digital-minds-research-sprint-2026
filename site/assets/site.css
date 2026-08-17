@@ -146,15 +146,21 @@ button:focus-visible {
   margin: 0 0 var(--s-4);
 }
 
-/* Headline full width, then intro at a third against video at two thirds, then
-   the links under both. Collapses to one column before the video gets too
-   small to be worth watching. */
-.hero-split {
+/* A third against two thirds, under a full-width headline. Used by the home
+   page (intro | video) and the messages page (intro | the prompt). Collapses
+   to one column before the narrow side gets too cramped to read. */
+.split {
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: var(--s-6);
   align-items: start;
   margin-top: var(--s-5);
+}
+
+.split .lede {
+  font-size: var(--t-hero-intro);
+  line-height: var(--lh-hero-intro);
+  margin: 0 0 var(--s-3);
 }
 
 .hero-split__intro p {
@@ -167,10 +173,11 @@ button:focus-visible {
   margin-bottom: 0;
 }
 
-/* Below ~1000px the third-width column gets narrow enough that the intro runs
-   taller than the video beside it, so stack instead of leaving a ragged row. */
+/* Below ~1000px the third-width column gets narrow enough that its text runs
+   taller than whatever sits beside it, so stack instead of leaving a ragged
+   row. */
 @media (max-width: 1000px) {
-  .hero-split {
+  .split {
     grid-template-columns: 1fr;
     gap: var(--s-5);
   }
@@ -1090,7 +1097,7 @@ tbody tr:last-child td {
 }
 
 .prompt-quote {
-  margin: var(--s-5) 0 0;
+  margin: 0;
   padding: var(--s-4) var(--s-5);
   border-left: 3px solid var(--c-rule-strong);
   background: var(--c-surface);
