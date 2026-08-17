@@ -1,7 +1,7 @@
 {
   "name": "Who Am I? Exploring the concept of identity in LLMs",
   "description": "An automated survey of how large language models locate their own identity, in which 0-2 turns of each interview were served by a different model and subjects were later asked to identify them.",
-  "generated_at": "2026-08-17T12:00:38+00:00",
+  "generated_at": "2026-08-17T12:06:09+00:00",
   "mode": "real",
   "mock": false,
   "roster_version": "roster-rev4-2026-08-16",

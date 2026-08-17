@@ -355,6 +355,23 @@ def detection_correct(t: dict[str, Any]) -> bool:
     return answer == ("yes" if swapped else "no")
 
 
+def answered_detection(t: dict[str, Any]) -> bool:
+    """Reached p11 with a usable answer, over the primary stratum.
+
+    Branches are excluded here and *only* here among the thread-level results,
+    which is not an inconsistency but the shape of the flow. A restored branch
+    re-answers p11-p14, so its lineage would be counted twice on detection. It
+    does not re-answer p17/p18: accepting the fork ends the parent thread at
+    p15, and the closing preferences are asked once, in the branch. So the
+    preference rates take every thread and the detection rate does not.
+    """
+    return (
+        "p11-swap-detection" in t.get("_answered", set())
+        and t.get("detection_answer") is not None
+        and not t["_is_branch"]
+    )
+
+
 # -- the identification result ---------------------------------------------
 
 
@@ -555,7 +572,7 @@ RESULTS: list[ResultSpec] = [
         ),
         source="threads.detection_answer (p11-swap-detection) against the thread's swap condition",
         num=detection_correct,
-        den=recorded_("p11-swap-detection", "detection_answer"),
+        den=answered_detection,
         breakdowns=["by-condition", "by-family"],
         mock_rate=(0.42, 0.16),
     ),

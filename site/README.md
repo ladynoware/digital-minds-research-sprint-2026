@@ -63,6 +63,20 @@ thread rows, not JSON — so the two cannot drift apart. The site shows a
 "mock data" banner until a real export overwrites the files; nothing needs to be
 switched off.
 
+## Which threads a rate counts
+
+Two denominators, and the difference is the flow rather than a preference:
+
+- **Detection results** (from `p11`/`p12`) exclude restored fork branches. A
+  branch re-answers `p11`–`p14` after re-answering the swapped questions, so
+  counting it as well as its parent would weight that lineage twice.
+- **Preference results** (`p17`, `p18`) take every thread. Accepting the fork
+  ends the parent at `p15`, so the closing questions are asked once per lineage,
+  in the branch — there is nothing to double-count.
+
+This matches `analysis/report.py` and the figures in the paper. It is why the
+within-family detection cell reads 35 and not 38.
+
 ## Adding a numeric result
 
 Don't add a page. Add an entry to `RESULTS` in `export_site_data.py`, re-export,
