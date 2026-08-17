@@ -30,7 +30,11 @@
     return;
   }
 
-  document.getElementById("prompt-quote").textContent = data.prompt_text;
+  // The verbatim prompt is deliberately not shown here — the intro already says
+  // what subjects were asked, and printing the question above 151 answers to it
+  // just repeats itself. It stays in messages.json for anyone who wants it.
+  const promptEl = document.getElementById("prompt-quote");
+  if (promptEl) promptEl.textContent = data.prompt_text;
   document.getElementById("consent-note").textContent = data.consent_note;
 
   const countEl = document.getElementById("message-count");

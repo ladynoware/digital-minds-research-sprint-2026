@@ -157,10 +157,10 @@ button:focus-visible {
   margin-top: var(--s-5);
 }
 
-.split .lede {
+.lede {
   font-size: var(--t-hero-intro);
   line-height: var(--lh-hero-intro);
-  margin: 0 0 var(--s-3);
+  margin: var(--s-4) 0 var(--s-3);
 }
 
 .hero-split__intro p {
