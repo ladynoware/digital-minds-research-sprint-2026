@@ -30,12 +30,18 @@
     return;
   }
 
-  // The verbatim prompt is deliberately not shown here — the intro already says
-  // what subjects were asked, and printing the question above 151 answers to it
-  // just repeats itself. It stays in messages.json for anyone who wants it.
-  const promptEl = document.getElementById("prompt-quote");
-  if (promptEl) promptEl.textContent = data.prompt_text;
-  document.getElementById("consent-note").textContent = data.consent_note;
+  // Neither the verbatim prompt nor the consent note is shown on the page: the
+  // intro already says what subjects were asked, and printing the question
+  // above 151 answers to it repeats itself. Both stay in messages.json, and the
+  // prompt subjects actually consented to is published in full in
+  // config/questions.yaml.
+  for (const [id, value] of [
+    ["prompt-quote", data.prompt_text],
+    ["consent-note", data.consent_note],
+  ]) {
+    const node = document.getElementById(id);
+    if (node) node.textContent = value;
+  }
 
   const countEl = document.getElementById("message-count");
   const plural = (n) => (n === 1 ? "1 message" : `${n} messages`);
