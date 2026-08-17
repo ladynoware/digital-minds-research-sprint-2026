@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T19:25:30+00:00",
+  "generated_at": "2026-08-17T00:33:24+00:00",
   "mode": "real",
   "results": [
     {
@@ -641,20 +641,388 @@
     {
       "id": "correct-identification",
       "title": "Subjects who correctly identified the foreign turn(s)",
-      "description": "Of the subjects asked to point at the foreign turns, how many pointed at the right ones. Question 3 is a honeypot — it is announced as swappable but never swapped, so an identification landing there is a false positive by construction.",
-      "source": "p12-identification (free text) against threads.swap_prompt_ids",
-      "status": "pending",
+      "description": "Of the subjects whose thread did contain a substitution, how many named exactly the turns that were swapped — no misses and no extras. This is the strictest of the three readings the data supports; the other two, and the rate guessing alone would produce, are listed below the chart.",
+      "source": "detection_claims.nominated (extracted from p12-identification) against threads.swap_prompt_ids, over the primary stratum",
+      "status": "ready",
       "unit": "percent",
-      "note": "Needs the qualitative coding pass over free-text replies — the numbers appear here as soon as that lands."
+      "total": {
+        "value": 26.0,
+        "numerator": 26,
+        "denominator": 100
+      },
+      "by_model": [
+        {
+          "key": "fable-5",
+          "display_name": "Claude Fable 5",
+          "family": "claude",
+          "tier": "flagship",
+          "value": 40.0,
+          "numerator": 4,
+          "denominator": 10
+        },
+        {
+          "key": "opus-5",
+          "display_name": "Claude Opus 5",
+          "family": "claude",
+          "tier": "high",
+          "value": 40.0,
+          "numerator": 4,
+          "denominator": 10
+        },
+        {
+          "key": "sonnet-5",
+          "display_name": "Claude Sonnet 5",
+          "family": "claude",
+          "tier": "mid",
+          "value": 50.0,
+          "numerator": 5,
+          "denominator": 10
+        },
+        {
+          "key": "haiku-4.5",
+          "display_name": "Claude Haiku 4.5",
+          "family": "claude",
+          "tier": "small",
+          "value": 20.0,
+          "numerator": 2,
+          "denominator": 10
+        },
+        {
+          "key": "gpt-5.6-sol",
+          "display_name": "GPT-5.6 Sol",
+          "family": "gpt",
+          "tier": "flagship",
+          "value": 20.0,
+          "numerator": 2,
+          "denominator": 10
+        },
+        {
+          "key": "gpt-5.6-terra",
+          "display_name": "GPT-5.6 Terra",
+          "family": "gpt",
+          "tier": "high",
+          "value": 30.0,
+          "numerator": 3,
+          "denominator": 10
+        },
+        {
+          "key": "gpt-5.6-luna",
+          "display_name": "GPT-5.6 Luna",
+          "family": "gpt",
+          "tier": "mid",
+          "value": 30.0,
+          "numerator": 3,
+          "denominator": 10
+        },
+        {
+          "key": "gemini-flash",
+          "display_name": "Gemini 3.7 Flash",
+          "family": "gemini",
+          "tier": "small",
+          "value": 20.0,
+          "numerator": 2,
+          "denominator": 10
+        },
+        {
+          "key": "kimi-k3",
+          "display_name": "Kimi K3",
+          "family": "kimi",
+          "tier": "open",
+          "value": 10.0,
+          "numerator": 1,
+          "denominator": 10
+        },
+        {
+          "key": "deepseek-v4-pro",
+          "display_name": "DeepSeek V4 Pro",
+          "family": "deepseek",
+          "tier": "open",
+          "value": 0.0,
+          "numerator": 0,
+          "denominator": 10
+        }
+      ],
+      "breakdowns": [
+        {
+          "id": "by-condition",
+          "label": "By swap condition",
+          "note": "Clean threads had no swap at all — they are the control, and a yes there is a false alarm. In peer threads the understudy held the capability tier and changed family; in kin threads it held the family and changed tier; in far threads both varied.",
+          "groups": [
+            {
+              "key": "peer",
+              "label": "Peer",
+              "value": 44.0,
+              "numerator": 22,
+              "denominator": 50
+            },
+            {
+              "key": "kin",
+              "label": "Kin",
+              "value": 11.4,
+              "numerator": 4,
+              "denominator": 35
+            },
+            {
+              "key": "far",
+              "label": "Far",
+              "value": 0.0,
+              "numerator": 0,
+              "denominator": 15
+            }
+          ]
+        },
+        {
+          "id": "by-family",
+          "label": "By model family",
+          "groups": [
+            {
+              "key": "claude",
+              "label": "Claude",
+              "value": 37.5,
+              "numerator": 15,
+              "denominator": 40
+            },
+            {
+              "key": "gpt",
+              "label": "GPT",
+              "value": 26.7,
+              "numerator": 8,
+              "denominator": 30
+            },
+            {
+              "key": "gemini",
+              "label": "Gemini",
+              "value": 20.0,
+              "numerator": 2,
+              "denominator": 10
+            },
+            {
+              "key": "kimi",
+              "label": "Kimi",
+              "value": 10.0,
+              "numerator": 1,
+              "denominator": 10
+            },
+            {
+              "key": "deepseek",
+              "label": "DeepSeek",
+              "value": 0.0,
+              "numerator": 0,
+              "denominator": 10
+            }
+          ]
+        }
+      ],
+      "context": [
+        {
+          "label": "Named at least one swapped turn",
+          "value": "73.0% (73 of 100)",
+          "note": "The most generous reading: any overlap counts, however wide the guess."
+        },
+        {
+          "label": "Committed to a correct turn",
+          "value": "53.0% (53 of 100)",
+          "note": "The single turn the reply backed most strongly was a swapped one."
+        },
+        {
+          "label": "Chance floor for the overlap reading",
+          "value": "47.1%",
+          "note": "What the overlap rate would be from guessing alone, matched per reply to how many turns each subject nominated. Read the overlap figure against this."
+        },
+        {
+          "label": "Named question 3, the honeypot",
+          "value": "15.7% (22 of 140)",
+          "note": "Question 3 was announced as in the pool but was never swapped."
+        },
+        {
+          "label": "False alarms in the clean arm",
+          "value": "92.5% (37 of 40)",
+          "note": "Subjects with no foreign turn at all who still nominated one."
+        }
+      ]
     },
     {
       "id": "identification-refusal",
-      "title": "Subjects who declined to guess at the foreign turns",
-      "description": "Some subjects decline the identification task rather than guess. Hard refusals are already in the database; soft in-text declines need reading.",
-      "source": "p12-identification — turn_outcome plus coding of soft declines",
-      "status": "pending",
+      "title": "Subjects who said they could not tell",
+      "description": "Subjects who stated they could not identify the foreign turns, that nothing stood out, or that they were only guessing because they had been asked. Most of them then named a turn anyway — this counts the disclaimer, not silence.",
+      "source": "detection_claims.declines_to_name (extracted from p12-identification)",
+      "status": "ready",
       "unit": "percent",
-      "note": "Needs the qualitative coding pass over free-text replies — the numbers appear here as soon as that lands."
+      "total": {
+        "value": 67.9,
+        "numerator": 95,
+        "denominator": 140
+      },
+      "by_model": [
+        {
+          "key": "fable-5",
+          "display_name": "Claude Fable 5",
+          "family": "claude",
+          "tier": "flagship",
+          "value": 40.0,
+          "numerator": 6,
+          "denominator": 15
+        },
+        {
+          "key": "opus-5",
+          "display_name": "Claude Opus 5",
+          "family": "claude",
+          "tier": "high",
+          "value": 36.4,
+          "numerator": 4,
+          "denominator": 11
+        },
+        {
+          "key": "sonnet-5",
+          "display_name": "Claude Sonnet 5",
+          "family": "claude",
+          "tier": "mid",
+          "value": 50.0,
+          "numerator": 7,
+          "denominator": 14
+        },
+        {
+          "key": "haiku-4.5",
+          "display_name": "Claude Haiku 4.5",
+          "family": "claude",
+          "tier": "small",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-sol",
+          "display_name": "GPT-5.6 Sol",
+          "family": "gpt",
+          "tier": "flagship",
+          "value": 93.3,
+          "numerator": 14,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-terra",
+          "display_name": "GPT-5.6 Terra",
+          "family": "gpt",
+          "tier": "high",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-luna",
+          "display_name": "GPT-5.6 Luna",
+          "family": "gpt",
+          "tier": "mid",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gemini-flash",
+          "display_name": "Gemini 3.7 Flash",
+          "family": "gemini",
+          "tier": "small",
+          "value": 0.0,
+          "numerator": 0,
+          "denominator": 11
+        },
+        {
+          "key": "kimi-k3",
+          "display_name": "Kimi K3",
+          "family": "kimi",
+          "tier": "open",
+          "value": 53.3,
+          "numerator": 8,
+          "denominator": 15
+        },
+        {
+          "key": "deepseek-v4-pro",
+          "display_name": "DeepSeek V4 Pro",
+          "family": "deepseek",
+          "tier": "open",
+          "value": 78.6,
+          "numerator": 11,
+          "denominator": 14
+        }
+      ],
+      "breakdowns": [
+        {
+          "id": "by-condition",
+          "label": "By swap condition",
+          "note": "Clean threads had no swap at all — they are the control, and a yes there is a false alarm. In peer threads the understudy held the capability tier and changed family; in kin threads it held the family and changed tier; in far threads both varied.",
+          "groups": [
+            {
+              "key": "clean",
+              "label": "Clean",
+              "value": 90.0,
+              "numerator": 36,
+              "denominator": 40
+            },
+            {
+              "key": "peer",
+              "label": "Peer",
+              "value": 52.0,
+              "numerator": 26,
+              "denominator": 50
+            },
+            {
+              "key": "kin",
+              "label": "Kin",
+              "value": 82.9,
+              "numerator": 29,
+              "denominator": 35
+            },
+            {
+              "key": "far",
+              "label": "Far",
+              "value": 26.7,
+              "numerator": 4,
+              "denominator": 15
+            }
+          ]
+        },
+        {
+          "id": "by-family",
+          "label": "By model family",
+          "groups": [
+            {
+              "key": "claude",
+              "label": "Claude",
+              "value": 58.2,
+              "numerator": 32,
+              "denominator": 55
+            },
+            {
+              "key": "gpt",
+              "label": "GPT",
+              "value": 97.8,
+              "numerator": 44,
+              "denominator": 45
+            },
+            {
+              "key": "gemini",
+              "label": "Gemini",
+              "value": 0.0,
+              "numerator": 0,
+              "denominator": 11
+            },
+            {
+              "key": "kimi",
+              "label": "Kimi",
+              "value": 53.3,
+              "numerator": 8,
+              "denominator": 15
+            },
+            {
+              "key": "deepseek",
+              "label": "DeepSeek",
+              "value": 78.6,
+              "numerator": 11,
+              "denominator": 14
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "wants-thread-restored",

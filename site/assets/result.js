@@ -114,6 +114,35 @@
     )
   );
 
+  /* -- other readings of the same data ------------------------------------ */
+
+  if (result.context && result.context.length) {
+    root.append(
+      el(
+        "section",
+        {},
+        el("div", { class: "section-head" }, el("h2", { text: "Read against" })),
+        el(
+          "dl",
+          { class: "context-list" },
+          result.context.map((item) =>
+            el(
+              "div",
+              { class: "context-item" },
+              el(
+                "dt",
+                {},
+                el("span", { class: "context-item__value", text: item.value }),
+                el("span", { class: "context-item__label", text: item.label })
+              ),
+              el("dd", { text: item.note })
+            )
+          )
+        )
+      )
+    );
+  }
+
   /* -- breakdowns --------------------------------------------------------- */
 
   for (const breakdown of result.breakdowns || []) {

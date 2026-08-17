@@ -659,26 +659,6 @@ tbody tr:last-child td {
   max-width: var(--measure);
 }
 
-.method {
-  border-top: var(--border);
-  padding-top: var(--s-4);
-}
-
-.method h2 {
-  font-size: var(--t-h2);
-  margin-bottom: var(--s-3);
-}
-
-.method-stages {
-  font-size: var(--t-small);
-  color: var(--c-ink-soft);
-  padding-left: var(--s-5);
-}
-
-.method-stages li {
-  margin-bottom: var(--s-2);
-}
-
 .card__lead {
   font-size: var(--t-small);
   color: var(--c-ink-faint);
@@ -716,6 +696,43 @@ tbody tr:last-child td {
 .table-scroll td:first-child {
   font-family: var(--font-mono);
   font-size: var(--t-code-chip);
+}
+
+/* -- "read against": other readings of the same result ---------------------- */
+
+.context-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s-4);
+}
+
+.context-item {
+  border-top: 2px solid var(--c-rule-strong);
+  padding-top: var(--s-3);
+}
+
+.context-item dt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.context-item__value {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.context-item__label {
+  font-size: var(--t-small);
+  color: var(--c-ink);
+}
+
+.context-item dd {
+  margin: var(--s-2) 0 0;
+  font-size: var(--t-small);
+  color: var(--c-ink-faint);
 }
 
 /* -- quotes ---------------------------------------------------------------- */

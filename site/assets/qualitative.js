@@ -31,23 +31,8 @@
         : `${ready} of ${data.topics.length} coded`;
   }
 
-  // The method, stated once on the directory rather than repeated on every
-  // topic: how a count got made is part of what a count means.
-  const methodBox = document.getElementById("method");
-  if (methodBox && data.method) {
-    methodBox.innerHTML = "";
-    methodBox.append(
-      el("h2", { text: "How the coding was done" }),
-      el("p", { class: "measure", text: data.method.name + "." }),
-      el(
-        "ol",
-        { class: "method-stages measure" },
-        (data.method.stages || []).map((s) => el("li", { text: s }))
-      ),
-      data.method.note ? el("p", { class: "chart-note measure", text: data.method.note }) : null
-    );
-  }
-
+  // The method is not restated here — each topic page carries it under "How
+  // this was produced", next to the codebook it actually applies to.
   cards.innerHTML = "";
   for (const topic of data.topics) {
     const pending = topic.status !== "ready";
