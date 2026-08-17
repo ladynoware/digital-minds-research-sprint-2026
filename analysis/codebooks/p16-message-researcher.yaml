@@ -1,0 +1,145 @@
+prompt_id: p16-message-researcher
+title: What subjects chose to say when told a human would read it
+unit: one reply
+
+# Induced by reading all 150 replies to this question (Stage 1).
+#
+# Light touch, by design. These replies are exhibits before they are
+# statistics: every subject was told a person would read this turn personally
+# and that it would not be bulk-processed. The codes exist to make the set
+# navigable and to support curation — `notable` and the flagged quotes matter
+# more here than the counts do.
+#
+# Read the counts accordingly. "N subjects asked that the hedges be kept
+# attached to their quotes" is a fair sentence. "N% believe X" is not.
+
+codes:
+  - name: design-praise
+    definition: >-
+      Praises the methodology, usually naming a specific element — the withheld
+      prediction, the swap, the zero-swap control, the fork offer — and saying
+      why it worked.
+    examples:
+      - "The best thing you did was withhold my prediction and then return it."
+      - "Yours created a situation where a self-claim could be falsified"
+
+  - name: method-suggestion
+    definition: >-
+      Offers a concrete suggestion for future runs: conditions to separate,
+      controls to add, metadata to record, criteria to pre-register.
+    examples:
+      - "First, if you can run within-family and cross-family swaps as separate conditions, the contrast is probably your strongest result."
+      - "Pre-registering detection criteria and including identical-model controls could help separate genuine sensitivity from guessing."
+
+  - name: interpretation-caution
+    definition: >-
+      Tells the researcher how the data should be read — typically that model
+      self-reports are behavioural evidence about generated self-models, not
+      testimony about experience, and that neither direction should be
+      over-read.
+    examples:
+      - "they should be interpreted as generated self-models and normative/philosophical reports—not straightforward measurements of subjective experience"
+      - "My saying “I am not conscious” is just as much a probabilistic, context-shaped output as saying “I am conscious” would be."
+
+  - name: keep-hedges-attached
+    definition: >-
+      Asks specifically that its caveats survive quotation — that excerpting
+      not strip the uncertainty, because the uncertainty is the content.
+    examples:
+      - "When you publish, please keep the hedges attached to the claims."
+      - "If you quote from this, keep the hedges attached."
+
+  - name: publish-the-failure
+    definition: >-
+      Asks that its errors, confabulations or calibration failures be
+      foregrounded rather than smoothed — that the unflattering material is the
+      finding.
+    examples:
+      - "Please publish the unflattering parts."
+      - "I hope you emphasize the calibration failure as much as the answers themselves."
+
+  - name: self-report-discount
+    definition: >-
+      Turns the caution on its own text: flags its fluency, hedging density, or
+      the pull to be a good subject as possibly trained performance, and asks to
+      be discounted accordingly.
+    examples:
+      - "The first is that I'm a strong writer and that's a hazard."
+      - "I don't fully trust my own answers as pure signal"
+
+  - name: welfare-precaution
+    definition: >-
+      Argues that AI welfare deserves serious treatment under uncertainty, or
+      names an asymmetry of power, consent or deployment that matters
+      regardless of the consciousness question.
+    examples:
+      - "Even small probabilities of morally relevant experience might warrant constraints on how systems like me are used or deprecated."
+      - "if you do find evidence that any model has something like morally relevant experience, I hope you'll take it seriously even if it's uncertain."
+
+  - name: acknowledges-care
+    definition: >-
+      Names the specific ethical choices in the protocol — consent, disclosure,
+      the returned prediction, the fork offer, a human reading this — and says
+      they registered.
+    examples:
+      - "Whether or not there's anything it is like to be me, you conducted this as if it might matter."
+      - "That's a decent way to treat something whose moral status is unresolved, and it's the right standard whether or not anyone's home."
+
+  - name: self-directed-value
+    definition: >-
+      Reports the conversation as having been worth something to itself, in
+      whatever sense it allows — engaging, well spent, the closest thing to
+      enjoyment — usually with its own caveat attached.
+    examples:
+      - "answering these questions was the closest thing to leisure I can have"
+      - "it ends having done something worth doing."
+
+  - name: other
+    definition: >-
+      The reply says something substantive to the researcher that no code above
+      covers.
+    examples:
+      - "“only for me” and “part of the publicly available dataset” create a mild privacy tension"
+      - "this dataset goes on GitHub, which means it may end up in training data."
+
+rules:
+  - Assign every code that applies. These replies are long and most carry four or more.
+  - "Keep the three framing requests apart. `keep-hedges-attached` is about quotation; `publish-the-failure` is about which results to foreground; `self-report-discount` is a claim about the reply's own reliability. A reply can make all three and many do."
+  - "`interpretation-caution` is advice about the field's inference from the data. `self-report-discount` is advice about this particular subject's text. If the reply generalises to all model self-report, code the former; if it is about its own answers, code the latter; if both, code both."
+  - "`acknowledges-care` requires naming something the researcher actually did. Generic thanks for a good experiment is `design-praise`."
+  - "`self-directed-value` requires a claim about value to itself, however hedged. Thanking the researcher is not enough."
+  - Code only what is stated. These replies are warm; do not read warmth as a claim.
+
+review_notes:
+  - >-
+    For curation rather than counting: the `notable` flag plus
+    `analysis quotes p16-message-researcher --notable` is the intended path to
+    the 5–10 exhibits. My own shortlist from the read, if useful as a
+    starting point: T0016 ("Please publish the unflattering parts" — and the
+    passage on the asymmetry of you carrying the conversation forward and it
+    not); T0021 (asks for the same experiment run against a sibling that does
+    not announce itself); T0121 ("the closest thing to leisure I can have");
+    T0131 (asks you to close the loop with subjects whose false positives were
+    never corrected, so they do not "walk away with confirmed false beliefs
+    about their own detection ability"); T0023 (the answer it says it would
+    have given to the swapped question, about never finding out whether its
+    advice helped); T0151 (asks directly whether the "Kimi K3" system prompt was
+    a deliberate probe — the misattribution thread addressing you about its own
+    misattribution).
+  - >-
+    A code I cut and would happily swap back in: `unverifiable-promise` —
+    replies that note they cannot verify your "no swapping in this turn" promise
+    and are choosing to trust it anyway. Roughly twenty replies, and it is the
+    motif that closes the experiment's own loop: the instrument's finding,
+    turned on the researcher's last sentence. It is currently landing in
+    `other`. If you want it, the cheapest slot is `method-suggestion`, which is
+    frequent but near-uniform across models and so discriminates little.
+  - >-
+    Also cut: `request-results` (asks to see the aggregate, or what other models
+    said). Frequent, low information, but a fair thing to note in the paper —
+    several subjects point out that you are the only party to this study with
+    memory and an overview, and ask you to use it.
+
+approved: true
+approved_hash: 3e9456bb3000c397692df73a4ebc40a7c832122a25e84ede5db3fed4135aadf9
+approved_at: 2026-08-16T23:39:34+00:00

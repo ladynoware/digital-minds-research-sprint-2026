@@ -1,10 +1,16 @@
 """Codebooks are instruments, and are frozen like one.
 
-A codebook is the measuring device for one question: 5–9 codes, each with a
+A codebook is the measuring device for one question: 5–12 codes, each with a
 name, a one-sentence definition and two verbatim examples drawn from the actual
 replies. It is written by a human-in-the-loop pass over the whole corpus, then
 **reviewed and approved by the researcher** before a single reply is tagged
 against it.
+
+The induction brief asked for 5–9. The ceiling is 12 because review is allowed
+to split a code that turned out to merge two things the subjects themselves
+keep apart — which is what happened to p04's ``process-instance``. Splits at
+review are the reviewer's call; the range here bounds them, it does not invite
+them.
 
 Freezing works the same way ``questions.yaml`` does. ``approve`` computes a
 SHA-256 over the codebook's canonical content and writes it back as
@@ -39,7 +45,7 @@ MANIFEST = Path(__file__).resolve().parent / "codebook_manifest.jsonl"
 _UNHASHED = ("approved_hash", "approved_at")
 
 MIN_CODES = 5
-MAX_CODES = 9
+MAX_CODES = 12
 OTHER_CODE = "other"
 # Above this share, `other` is not a residual category — it is the sign of a
 # codebook that failed to see a real pattern in the data.

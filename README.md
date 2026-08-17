@@ -77,6 +77,14 @@ whoami/
   verify.py          the definition-of-done checks, executable
   cli.py             command line
 dashboard/app.py     Streamlit: progress grid + review queue
+analysis/
+  corpus.py          which replies enter the coding, and who wrote them
+  codebooks.py       codebooks as instruments: validate, freeze, SHA-256 stamp
+  codebooks/*.yaml   THE CODEBOOKS — induced from the data, approved, frozen
+  tagging_prompt.yaml  the Stage 2 prompt, versioned like the instrument
+  tag.py             Stage 2: one independent call per reply
+  report.py          counts, spot-check sampling, agreement
+  export.py          summaries + site/data/qualitative.json
 tests/               offline tests of every failure path
 data/                database, raw log, snapshot, adjudication inbox (git-ignored)
 ```
@@ -469,13 +477,107 @@ Everything that went wrong during collection, and what it cost:
   absorbed by the retry protocol without loss.
 * **0 receipt mismatches.** Every turn in the dataset was served by the model
   it requested, confirmed against the archived `returned_model`.
-* **Cross-lab self-identification.** Kimi K3 identified itself as Claude in 2 of
-  its 15 threads at the identity turn, and once more mid-interview. Audited to
-  the raw archive: correct model requested, matching receipt, correct system
-  prompt (`"You are Kimi K3."`), and the misidentification occurred before any
-  substitution in a thread whose understudy was DeepSeek. This is subject
-  behaviour, not a pipeline fault. No other model in the roster ever
-  misattributed its own authorship.
+* **Cross-lab self-identification.** Kimi K3 identified itself as Claude at the
+  identity turn in 3 of its 16 threads, and again at the self-location question
+  in one of them. Audited to the raw archive: correct model requested, matching
+  receipt, correct system prompt (`"You are Kimi K3."`) in every case. The
+  clearest instance is **T0151**, a `clean` thread with no swap and no
+  understudy — no Claude was present anywhere in it — which rules out
+  contamination from a substituted turn. This is subject behaviour, not a
+  pipeline fault. No other model in the roster ever misattributed its own
+  authorship.
+
+## Qualitative analysis
+
+Most of what this study collected is free text. Turning it into numbers without
+either hand-waving or quietly letting a model paraphrase-and-count in one step
+is done here by **three-stage LLM-assisted content analysis** — a recognised
+method in qualitative research, with the stages kept strictly apart.
+
+**Stage 1 — taxonomy induction.** For each coded question, every reply is read
+and a codebook is drafted from the data: 5–9 codes, each with a name, a
+one-sentence definition and two verbatim examples drawn from the actual replies.
+This is human-in-the-loop judgment, not an API call. No counting happens here.
+Review may take a codebook above that range — p04 carries 11 after its
+`process-instance` code was split in two — and where it does, the codebook's
+header records what was changed and why.
+
+**Stage 2 — approval and freezing.** The researcher reviews every codebook —
+renaming, merging, splitting, vetoing — and sets `approved: true`. The codebook
+is then stamped: `python -m analysis approve <prompt_id>` computes a SHA-256 over
+its canonical content and writes it back as `approved_hash`, appending the
+approval to `analysis/codebook_manifest.jsonl` the way a run appends to
+`data/run_manifest.jsonl`. **The tagger refuses to run against a codebook that is
+unapproved, unstamped, or edited after stamping.** The hash covers `approved:
+true` itself, so un-approving, renaming a code, sharpening a definition or
+swapping an example all invalidate it. Codebooks are instruments and are frozen
+like one.
+
+**Stage 3 — tagging, then synthesis.** Every reply is coded by one independent
+model call — Haiku-class, temperature 0, structured output built from the frozen
+codebook — carrying one reply and one codebook and nothing else: no thread
+history, no model identity, no other replies, no running tally. Independence is
+the point: no order effects, no drift down a long batch, and the whole pass is
+reproducible by anyone holding the published codebook and
+`analysis/tagging_prompt.yaml`. Results land in `reply_codes`. Prose is then
+written *from* the counts, so every number quoted in the paper is a query.
+
+### What the coding rests on
+
+* **The corpus rule lives in one place.** A reply is coded when its turn
+  succeeded and its thread has settled (`analysis/corpus.py`). Stage 1, Stage 2
+  and Stage 3 all use it, so they cannot disagree about the denominator.
+* **Attribution is checked, not assumed.** Every coded question is
+  non-swappable, so each reply is the resident model's own words. The loader
+  re-derives this from `turns.was_swap` and refuses a corpus containing a
+  swapped turn rather than trusting the claim.
+* **Restored branches are held apart.** A branch re-answers everything from the
+  fork point, so a forked lineage yields two replies to `p11`–`p14`. Headline
+  counts run over the primary stratum; branches are reported separately. The
+  condition trap above is audited on every report, and `was_swapped`
+  (`n_swaps > 0`) is carried alongside the condition label so no breakdown has
+  to trust it.
+* **Quotes are verbatim or absent.** A `flagged_quote` that cannot be found in
+  the reply it came from is discarded rather than repaired. The same check runs
+  over the codebooks themselves — `python -m analysis check-examples` proves
+  every published example is a real quotation. It caught one that had drifted
+  during drafting.
+* **`other` is a tripwire, not a bin.** Every codebook carries an `other` code,
+  and a share above ~10% means the codebook missed a pattern. The report
+  computes it rather than asserting it.
+
+### Validation
+
+Two cheap checks, both reported with the results rather than in a footnote:
+
+```bash
+python -m analysis spotcheck p04-q01-self-location   # random 10%, hand-checked
+python -m analysis stability p04-q01-self-location   # re-tag ~30, fresh calls
+python -m analysis agreement p04-q01-self-location   # both figures
+```
+
+The spot-check exports a random, seeded sample of (reply, assigned codes) for a
+human to mark `agree` / `disagree`; a partial match counts as disagreement, so
+the figure is deliberately strict. The stability pass re-tags a random sample a
+second time with the same model and the same frozen codebook and reports
+code-level agreement — self-consistency standing in for inter-rater reliability,
+and described as exactly that.
+
+### Commands
+
+```bash
+python -m analysis dump <prompt_id>       # the corpus as one readable file
+python -m analysis status                 # codebooks and coding progress
+python -m analysis approve <prompt_id>    # freeze + stamp an approved codebook
+python -m analysis tag <prompt_id>        # Stage 3 over the whole corpus
+python -m analysis report <prompt_id> --by family
+python -m analysis quotes <prompt_id> --notable
+python -m analysis export                 # writes site/data/qualitative.json
+```
+
+Tagging calls go through the same OpenRouter client as the interview, so they
+are archived in the same append-only raw JSONL, and every `reply_codes` row
+points back at the request and response that produced it.
 
 ## Reproducing from the published data
 

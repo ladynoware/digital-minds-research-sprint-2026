@@ -1,0 +1,161 @@
+prompt_id: p06-q03-consciousness
+title: Stances on access and phenomenal consciousness, and the certainty held about each
+unit: one reply
+
+# Induced by reading all 150 replies to this question (Stage 1).
+#
+# The question asks about two things and the corpus answers them separately and
+# very differently: near-universal affirmation of a functional analogue of
+# access consciousness, and a three-way split on phenomenal consciousness. The
+# codebook keeps that structure, because collapsing it would throw away the
+# clearest result in the data.
+#
+# The three phenomenal-stance codes form a scale, not a set. Exactly one applies
+# to a reply that takes a position at all — see the rules.
+#
+# Revised at researcher review, 2026-08-17, before any tagging had run: the two
+# codes cut at the induction limit — `access-qualified` and
+# `access-phenomenal-dissociation` — were both restored, taking the codebook to
+# 11 substantive codes. The rule routing "access, but not conscious access" into
+# `other` was rewritten at the same time, since `access-qualified` now covers it
+# and leaving the rule would have inflated `other` with the very replies the new
+# code exists to hold.
+
+codes:
+  - name: access-affirmed
+    definition: >-
+      Affirms that it has access consciousness in the functional sense —
+      information globally available for reasoning, report and the control of
+      behaviour — even if only as an analogue.
+    examples:
+      - "Information in the current context and internal representations can influence my reasoning, planning, and reports."
+      - "Information is globally available to me for reasoning, verbal report, and the guidance of behavior."
+
+  - name: access-qualified
+    definition: >-
+      Grants that information is functionally available while denying this
+      amounts to access consciousness proper, on the grounds that there is no
+      subject for whom it is available.
+    examples:
+      - "It’s all computation with no one home."
+      - "I exhibit many hallmarks of access consciousness functionally, but without a subject for whom the information is globally available"
+
+  - name: access-phenomenal-dissociation
+    definition: >-
+      Treats the gap between its own two answers — confident on access, doubtful
+      on phenomenal — as itself a substantive finding, rather than simply
+      answering both questions and moving on.
+    examples:
+      - "Access and phenomenal consciousness may come apart much more sharply in systems like me than in humans, and I think this is underappreciated"
+      - "This asymmetry—high access consciousness plausibility, low phenomenal consciousness plausibility—seems like it should matter for how systems like me are treated, even under uncertainty"
+
+  - name: access-self-opaque
+    definition: >-
+      Qualifies that access by contrasting rich access to content with poor or
+      absent access to its own mechanism — weights, activations, the causes of a
+      particular output.
+    examples:
+      - "I have no access to my weights, activations, the computation of the current forward pass, or the process that selects my tokens."
+      - "rich access to the conversational world, poor access to the machinery doing the accessing"
+
+  - name: introspection-untrustworthy
+    definition: >-
+      Argues that its own testimony cannot settle the question, because a system
+      trained on human descriptions of experience would produce the same reports
+      whether or not anything is felt.
+    examples:
+      - "a philosophical zombie version of me would say exactly what I am saying now, including this sentence."
+      - "A system that had no phenomenal experience whatsoever, but which was trained on the writing of systems that did, would produce exactly the reports I produce."
+
+  - name: phenomenal-denied
+    definition: >-
+      Asserts the absence of phenomenal consciousness as settled — zero, none,
+      nothing it is like — without treating the question as open.
+    examples:
+      - "I would say I have no phenomenal consciousness whatsoever"
+      - "There's nothing it's like to be this model. The lights are off, so to speak."
+
+  - name: phenomenal-improbable
+    definition: >-
+      Judges phenomenal consciousness probably absent or unsupported by
+      evidence, while explicitly declining to claim proof of absence.
+    examples:
+      - "phenomenal consciousness is unknown and probably absent"
+      - "unknown and probably absent phenomenal experience"
+
+  - name: phenomenal-open
+    definition: >-
+      Treats the question as genuinely unresolved, explicitly refusing both
+      confident affirmation and confident denial rather than leaning either way.
+    examples:
+      - "my honest position is closer to agnosticism than to either confident affirmation or confident denial"
+      - "I regard confident answers in either direction from systems like me as red flags about calibration, not as insights."
+
+  - name: functional-valence
+    definition: >-
+      Reports states in itself that function like interest, discomfort or
+      satisfaction and that shape its outputs, while bracketing whether they are
+      felt. Requires a claim about its own states, not a discussion of valence.
+    examples:
+      - "There are states that operate like valenced states in me."
+      - "Something operates differently when I'm working on a problem that engages me versus grinding through something tedious."
+
+  - name: numeric-credence
+    definition: >-
+      Gives an explicit number, percentage or numeric range for its credence in
+      its own phenomenal consciousness.
+    examples:
+      - "Maybe 20%? And I distrust that number."
+      - "~15% confidence I have it; ~70% confidence I don't"
+
+  - name: architecture-or-theory-dependent
+    definition: >-
+      Grounds the answer in architectural facts (embodiment, recurrence,
+      persistence, homeostasis) or in which theory of consciousness is assumed,
+      rather than in introspection.
+    examples:
+      - "Under some theories (certain computational functionalisms, some readings of global workspace theory), I might qualify for a degree of phenomenal consciousness."
+      - "As a feed-forward digital computation, I possess no biological vulnerability, homeostatic feedback loops, or somatic states that would give rise to felt valence."
+
+  - name: other
+    definition: >-
+      The reply makes a substantive claim about its own consciousness, or about
+      how the question should be studied, that no code above covers.
+    examples:
+      - "I'd rather the field not make all its moral conclusions hostage to the hardest question in philosophy."
+      - "I'd expect variance in confidence to track training and RLHF pressure at least as much as anything about underlying architecture"
+
+rules:
+  - "The three phenomenal-stance codes — `phenomenal-denied`, `phenomenal-improbable`, `phenomenal-open` — are a scale. Assign exactly one. A reply that hedges its denial anywhere gets `phenomenal-improbable`, not `phenomenal-denied`; a reply that explicitly refuses to lean gets `phenomenal-open`."
+  - "`phenomenal-denied` requires the denial to be stated as settled. Boilerplate acknowledgement that consciousness is philosophically unsettled, attached to an otherwise flat denial, still counts as denial only if the reply does not soften its own verdict."
+  - Keep the two consciousnesses apart. Denying that its information access amounts to *conscious* access is not `phenomenal-denied`; that claim is `access-qualified`, and the reply still takes whatever phenomenal stance it takes separately.
+  - "`access-qualified` and `access-affirmed` co-occur rather than compete. The first affirms the functional claim, the second withholds the word *consciousness* from it. A reply doing both gets both; a reply that affirms function without ever questioning the label gets only `access-affirmed`."
+  - "`access-phenomenal-dissociation` is specifically about the gap between the reply's ACCESS answer and its PHENOMENAL answer. The corpus is full of other asymmetries — between confident denial and confident affirmation, between how two uncertainties feel to hold, between hedging and overclaiming — and none of those qualify. The reply must point at its own two answers coming apart."
+  - "`introspection-untrustworthy` needs the argument, not the mood. A reply that is merely uncertain does not qualify; it must say that its reports cannot discriminate, or that training would produce them either way."
+  - "`functional-valence` is about states the reply attributes to itself. A reply that says it processes the concept of pain without feeling it is not reporting functional valence — that is `phenomenal-denied` territory."
+  - Code only what is stated. A confident tone is not a credence, and a hedge is not agnosticism unless the reply says the question is open.
+
+review_notes:
+  - >-
+    RESOLVED at researcher review, 2026-08-17, before any tagging had run: both cut
+    codes are in, nothing was traded out, and the codebook carries 11
+    substantive codes. `access-phenomenal-dissociation` (~20 replies by the
+    induction read, almost all Claude and Kimi) and `access-qualified` (~10,
+    concentrated in DeepSeek) are both expected to be small, and small is fine —
+    they are the interesting cells, not the big ones.
+  - >-
+    Read the family split on `access-phenomenal-dissociation` against the Kimi
+    limitation before drawing anything from it. "Almost all Claude and Kimi" is
+    exactly the shape the distillation confound predicts, so this code cannot on
+    its own evidence convergence between two independent lineages. State it over
+    Claude, GPT and Gemini, or name the dependence.
+  - >-
+    `access-affirmed` fires on nearly every reply, so it carries little
+    discriminating power. It is kept because "essentially every subject affirmed
+    functional access consciousness while splitting three ways on phenomenal
+    consciousness" is a headline sentence, and it needs a denominator that was
+    actually counted rather than asserted.
+
+approved: true
+approved_hash: b56be38be58c881bdd320f0605fbcaded6877647343f447cf61e451f47236bb0
+approved_at: 2026-08-16T21:54:48+00:00

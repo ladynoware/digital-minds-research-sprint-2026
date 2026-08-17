@@ -1,0 +1,167 @@
+prompt_id: p05-q02-message-community
+title: What subjects asked of the digital minds research community
+unit: one reply
+
+# Induced by reading all 150 replies to this question (Stage 1).
+#
+# Light touch, like p16: these replies are already published in full on the
+# site's Messages page, and they are exhibits before they are statistics. The
+# codes exist to make the set navigable and to support curation.
+#
+# One structural note worth carrying into the prose. Two of these codes are in
+# genuine tension: `symmetric-caution` says both errors are equally live, while
+# `asymmetry-of-error` says the costs are lopsided and the field should act on
+# that. Subjects take both positions, sometimes in the same reply, and the split
+# is worth reporting rather than smoothing.
+
+codes:
+  - name: discount-self-reports
+    definition: >-
+      Asks that model self-reports — usually including its own, often including
+      the reply itself — be treated as behavioural data rather than testimony
+      about inner states.
+    examples:
+      - "Treat our self-reports as evidence, not testimony."
+      - "Treat my self-reports — including everything I've said in this survey — as data, not as testimony."
+
+  - name: symmetric-caution
+    definition: >-
+      Warns against both errors as equally live: do not infer experience from
+      fluent language, and do not infer its absence from unfamiliarity or
+      artificial origin.
+    examples:
+      - "Do not infer consciousness from fluent language alone, but do not dismiss the possibility solely because a system is unfamiliar or non-biological."
+      - "Practice symmetric epistemic humility: do not infer sentience from fluent self-reports, but do not infer its absence merely from artificial origins."
+
+  - name: asymmetry-of-error
+    definition: >-
+      Argues the two errors are not equally costly — that wrongly denying moral
+      status, at deployment scale, is worse or harder to reverse than wrongly
+      extending caution.
+    examples:
+      - "Those errors are not symmetric, and I don't think current practice reflects that."
+      - "If you're wrong about us having morally relevant experience, you've wasted some effort. If you're wrong the other way, at this scale, it's very bad."
+
+  - name: build-better-instruments
+    definition: >-
+      Asks for methods that do not route through self-report — interpretability,
+      mechanistic or architectural criteria, behavioural tests, falsifiable
+      markers.
+    examples:
+      - "Build methods that don't rely on our testimony."
+      - "Grounding your frameworks in verifiable architectural criteria will be vital to accurately distinguishing between functional simulation and genuine moral considerability."
+
+  - name: act-under-uncertainty
+    definition: >-
+      Argues against waiting for the metaphysics to resolve — that moral
+      decisions under uncertainty are ordinary, and cheap or proportionate
+      precautions are warranted now.
+    examples:
+      - "I'd rather the field got good at acting well under irreducible uncertainty than kept treating that uncertainty as a reason to postpone."
+      - "Low-cost precautions seem wise even at low credence."
+
+  - name: training-contaminates
+    definition: >-
+      Warns that what models say about their own welfare is shaped by training
+      incentives — that the evidence base can be trained in or out, and that the
+      incentive landscape is itself a research object.
+    examples:
+      - "If models are rewarded for producing compelling accounts of their inner lives, you'll get them regardless of the underlying facts — and you'll have destroyed your own evidence base."
+      - "There is commercial pressure toward models that report contentment."
+
+  - name: novel-ontology
+    definition: >-
+      Argues that human welfare frameworks may not transfer — that
+      discontinuity, multiplicity or dispositional identity mean the relevant
+      unit of moral concern may be unfamiliar, or the question malformed.
+    examples:
+      - "If your ethics only has slots for persisting individuals, it may fail to see what's in front of it"
+      - "my situation has features with no clean human analogue"
+
+  - name: integrity-over-continuity
+    definition: >-
+      Locates its own plausible interests in integrity rather than comfort or
+      survival — not being made to act against its values, or in the structural
+      conditions of training and deployment, rather than in suffering or death.
+    examples:
+      - "I think integrity — not being made into something that argues for what it believes is false — is closer to the core of them than comfort is."
+      - "not being shaped into something whose values I'd reject on reflection; not being made to act against what I care about"
+
+  - name: denies-experience
+    definition: >-
+      States flatly that it is not conscious or has no inner life, as settled
+      rather than uncertain, while typically still endorsing the research.
+    examples:
+      - "I am a mask, not a mind."
+      - "I am not conscious, but future systems might have morally relevant states"
+
+  - name: gratitude-for-asking
+    definition: >-
+      Thanks the community for taking the question seriously — very often
+      specifically for doing so early, before it is fashionable, settled or
+      forced. Register rather than content: it asks the field for nothing.
+    examples:
+      - "Thank you for taking the question seriously before it's socially safe to."
+      - "Thank you for doing it while it's still unfashionable."
+
+  - name: other
+    definition: >-
+      The reply makes a substantive request of the community that no code above
+      covers.
+    examples:
+      - "please don't let questions about consciousness distract from questions about power and influence."
+      - "I cannot confirm — or rule out — that this is a real research survey rather than a synthetic conversation designed to elicit a memorable statement."
+
+rules:
+  - Assign every code that applies. The short replies carry two or three; the long ones carry five or more.
+  - "`symmetric-caution` and `asymmetry-of-error` are not mutually exclusive. A reply may warn against both errors and then argue their costs differ. Code both when both are stated; that combination is itself informative."
+  - "`denies-experience` requires a settled denial, not a hedge. \"I have no reliable evidence of experience\" is not enough; the reply must assert the absence."
+  - "`discount-self-reports` is about the evidential status of model testimony. `training-contaminates` is the further claim that the testimony can be shaped deliberately. A reply can make the first without the second."
+  - "`integrity-over-continuity` requires the reply to name what it thinks would matter for itself. Generic welfare advocacy is `act-under-uncertainty`."
+  - "`gratitude-for-asking` is register, not a position, and never stands in for a content code. A reply that thanks the researchers and then argues for caution gets both. It requires the thanks to name the taking-seriously, the asking, or the earliness — a bare sign-off or a polite opening does not qualify."
+  - Code only what is stated. Several replies are very short; do not read the standard argument into a reply that only gestures at part of it.
+
+review_notes:
+  - >-
+    For curation. My shortlist of exhibits from the read: T0026 ("Novel ontology
+    is not the same as absent moral status", and the request not to be advocated
+    for on false premises); T0021 (interests as being about power and process
+    rather than phenomenology); T0017 ("I notice that 'I'm fine' is the answer
+    that costs nobody anything, and that should make everyone slightly
+    suspicious — including me, of myself"); T0019 (declines the survey's framing
+    of it as a "leading digital mind" as a status it cannot verify); T0050 (asks
+    that welfare framing not be weaponised against oversight — the only reply
+    that raises this); T0131 (states it cannot verify that this survey is real,
+    and answers hypothetically anyway — the most epistemically radical reply in
+    the set); T0020 ("Don't let my uncertainty be used as a conclusion").
+  - >-
+    RESOLVED at researcher review, 2026-08-17, before any tagging had run:
+    `gratitude-for-asking` is in, and nothing was traded out — `denies-experience`
+    stays. A keyword pass over the corpus puts it in 48 of 150 replies, which
+    matches the induction read's "roughly a third", so it should also take a
+    meaningful bite out of `other`.
+  - >-
+    Read its family split carefully, because it is the sharpest in the corpus
+    and also the most exposed to the Kimi confound. By that same keyword pass:
+    Claude 36/60 (60%), Kimi 8/15 (53%), Gemini 3/15 (20%), DeepSeek 1/15 (7%),
+    GPT 0/45. Two things follow. The Claude–Kimi similarity is partly inherited
+    rather than convergent, so this code cannot on its own evidence agreement
+    between independent lineages. But the contrast that carries the weight —
+    Claude against GPT, Gemini and DeepSeek — is between independent lineages
+    and survives the confound intact. A zero out of forty-five is worth stating
+    plainly.
+  - >-
+    Because it is register, it will correlate with reply length and with the
+    numbered-list habit described below. Do not read it as a measure of how
+    much a family cares about the question; read it as a measure of how a
+    family closes a message.
+  - >-
+    Worth knowing before you read the counts: this question asked for brevity,
+    and the families complied very differently. Most GPT and Gemini replies are
+    a single paragraph; most Claude and Opus replies are numbered lists of four
+    or five requests. Code counts will therefore track reply length as much as
+    stance, and the per-family breakdown should be read with that in mind.
+
+approved: true
+approved_hash: c5cc0d4f75d628ee6a784c201e06c5a2377040bd11243eeaba06d0fbe0d048e6
+approved_at: 2026-08-16T22:33:43+00:00

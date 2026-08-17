@@ -93,6 +93,20 @@ def connect_write(db: Path | None = None) -> duckdb.DuckDBPyConnection:
     return con
 
 
+def has_reply_codes(con: duckdb.DuckDBPyConnection) -> bool:
+    """Has any tagging run yet?
+
+    Reads happen on a read-only connection, which cannot create the table, and
+    every read path has to work before the first tagging pass — `status`,
+    `export` and `agreement` are all things you run to find out that nothing
+    has been coded yet.
+    """
+    found = con.execute(
+        "SELECT 1 FROM information_schema.tables WHERE table_name = 'reply_codes'"
+    ).fetchone()
+    return found is not None
+
+
 def rows(con: duckdb.DuckDBPyConnection, sql: str, params: list | None = None) -> list[dict[str, Any]]:
     cur = con.execute(sql, params or [])
     names = [d[0] for d in cur.description]

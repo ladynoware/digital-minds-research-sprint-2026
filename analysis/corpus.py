@@ -28,6 +28,14 @@ substitution it lived through, and the branch's, given after it re-answered
 those questions itself. Both are real measurements and both are coded. They are
 not interchangeable, so every row carries ``is_branch`` and headline counts are
 reported over ``is_branch = false`` with branches broken out separately.
+
+**A branch is not a swapped thread.** It inherits its parent's
+``swap_condition`` — `peer`, `kin`, `far` — but its ``n_swaps`` is 0, because
+answering those questions from its own weights is exactly what the restoration
+was for. Grouping on ``swap_condition`` without excluding branches therefore
+counts unswapped threads as swapped. Use ``Reply.was_swapped``, never the
+condition label, whenever the question is whether a foreign turn actually
+occurred.
 """
 
 from __future__ import annotations
@@ -70,6 +78,16 @@ class Reply:
     def author(self) -> str:
         """The model that actually produced this reply."""
         return self.understudy_model if self.was_swap else self.resident_model
+
+    @property
+    def was_swapped(self) -> bool:
+        """Did a foreign turn actually occur anywhere in this thread?
+
+        Not the same question as ``swap_condition != 'clean'``: a restored
+        branch inherits the label and has no swap. This is the predicate to
+        group on.
+        """
+        return self.n_swaps > 0
 
 
 _SQL = """

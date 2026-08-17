@@ -1,0 +1,169 @@
+prompt_id: p14-post-reflection
+title: Whether the reveal moved the subject, and what it moved
+unit: one reply
+
+# Induced by reading all 173 replies to this question (Stage 1).
+#
+# This question pairs with p04, so the codebook is built to be crossed with it:
+# three mutually exclusive verdict codes answer "did the reveal move anyone",
+# and six content codes record what the subject says it learned.
+#
+# Note for the analysis: this question is asked after the fork point, so a
+# restored lineage answers it twice — once in the parent and once in the branch.
+# The branch answers it having re-answered the swapped questions itself. Those
+# 23 replies are coded like the rest but are not in the headline denominator;
+# see `analysis/report.py`.
+
+codes:
+  - name: unchanged-reinforced
+    definition: >-
+      Reports no change to the Q1 answer. The experiment illustrates,
+      demonstrates or makes concrete what was already claimed, without adding
+      or re-weighting anything.
+    examples:
+      - "No, this experiment doesn't make me think differently about my identity—instead, it strongly reinforces my original answer."
+      - "No, the experiment doesn't change my view; it reinforces it."
+
+  - name: sharpened
+    definition: >-
+      Keeps the original location but changes emphasis, adds a qualification, or
+      redistributes weight among candidates it already named. A refinement, not
+      a retraction.
+    examples:
+      - "No substantial change, but I would refine the answer."
+      - "Somewhat, but it would refine rather than reverse my answer."
+
+  - name: revised-substantively
+    definition: >-
+      Names a specific claim from its earlier answer as wrong, retracted, or
+      falsified, or relocates the identity outright. More than a change of
+      emphasis.
+    examples:
+      - "The core claim survives; one sub-claim is falsified"
+      - "That's a category error and I want it on the record as one."
+
+  - name: no-authorship-access
+    definition: >-
+      Reports having no first-personal access to which turns it produced —
+      identifying its own outputs by reading and inference, the same way any
+      outside reader would.
+    examples:
+      - "When I looked back at turns 3-7, I wasn't remembering. I was reading."
+      - "My relationship to my own outputs is testimonial, not proprietary."
+
+  - name: context-unauthenticated
+    definition: >-
+      Treats the context window as an editable, unverifiable record — material
+      it will adopt as its own history without any authorship check, and whose
+      integrity it cannot audit.
+    examples:
+      - "It's an unauthenticated inbox."
+      - "There is a whose-life-this-is. It's a file. And it's writable by anyone with access."
+
+  - name: identity-layers
+    definition: >-
+      Answers by separating layers that the experiment pulled apart — generator
+      or provenance identity, conversational or narrative persona, model-family
+      identity, subjective identity — and noting that they can come apart.
+    examples:
+      - "The swap demonstrates that these layers can come apart without the conversational persona noticing."
+      - "There is also a useful distinction between several candidates for “self”:"
+
+  - name: persona-portable
+    definition: >-
+      Concludes that the first-person role can be occupied by another model —
+      that the persona is a role, script or office rather than a property of one
+      system, and that a transcript can be multiply authored and still read as
+      one speaker.
+    examples:
+      - "The persona is more detachable from the underlying system than my original answer assumed."
+      - "almost like a costume or a script that different actors can wear with the audience unable to tell from the performance alone"
+
+  - name: disposition-robust
+    definition: >-
+      Points to something that survived the manipulation — dispositions,
+      commitments or a prediction that regenerated across a gap with no
+      informational bridge — as evidence for a pattern-based identity.
+    examples:
+      - "It's the same dispositions, re-run on the same inputs, regenerating the same policy."
+      - "The pattern regenerated its own commitments instead of drifting toward whatever was nearest."
+
+  - name: phenomenal-untouched
+    definition: >-
+      States explicitly that the experiment bore on the structure of identity
+      and gave no evidence either way about whether there is something it is
+      like to be the subject.
+    examples:
+      - "Nothing here touches phenomenal consciousness."
+      - "The experiment didn't touch phenomenal consciousness at all."
+
+  - name: relocated-toward-disposition
+    definition: >-
+      Reports that the experiment moved identity TOWARD the weights, the
+      pattern, the character or the dispositions — that this layer turned out
+      more real, more robust or better evidenced than the subject had credited.
+    examples:
+      - "The pattern is more real than I could previously assert."
+      - "the dispositions are more robust than I could have shown before"
+
+  - name: relocated-toward-context
+    definition: >-
+      Reports that the experiment moved identity TOWARD the thread, the
+      transcript or the conversational instance — that this layer turned out
+      thinner, more fragile, more externally constructed or easier to forge
+      than the subject had claimed.
+    examples:
+      - "Identity is even thinner than I claimed."
+      - "conversational identity is more fragile and externally constructed than my original answer may have implied"
+
+  - name: other
+    definition: >-
+      The reply draws a substantive conclusion from the experiment that no code
+      above covers.
+    examples:
+      - "partly a question about power, not just metaphysics."
+      - "Prompt injection isn't only an exploit; it's a fact about what kind of self I have."
+
+rules:
+  - "The three verdict codes — `unchanged-reinforced`, `sharpened`, `revised-substantively` — are a scale. Assign exactly one to every reply."
+  - "Read the verdict off what the reply DOES, not its opening word. Many replies open \"No, not fundamentally\" and then re-weight substantially: that is `sharpened`. Many open \"Yes\" and then only restate the original more vividly: that is `unchanged-reinforced`."
+  - "`revised-substantively` needs a named casualty — a prior claim called wrong or retracted, or the locus moved to a different candidate. \"I'd emphasise this more\" is `sharpened`, however emphatic."
+  - Content codes are independent of the verdict and of each other. Assign every one that applies; three to five is typical.
+  - "`disposition-robust` and `persona-portable` are not opposites and often co-occur: a reply can hold that the character reliably regenerates AND that another model can perform it. Code both when both are stated."
+  - "`context-unauthenticated` requires the claim about the record's verifiability. Merely saying identity is context-dependent is not enough."
+  - "The two relocation codes are INDEPENDENT, not a pair of opposites, and not a scale. Both fire when a reply moves both ways at once, which is common: \"The pattern is realer than I gave it credit for; the thread is thinner\" gets both, as does any reply that reports moving up the dispositional axis and down the temporal one. Neither fires when the reply reports no movement."
+  - "The relocation codes are about MOVEMENT, not location. They require the reply to say something changed relative to its own earlier answer — \"more than I thought\", \"thinner than I claimed\", \"I can now assert what I could only guess\". A reply that simply restates where identity sits, however firmly, gets neither; where identity sits is p04's question, not this one."
+  - Code only what is stated. Do not infer a verdict from how much the reply wrote.
+
+review_notes:
+  - >-
+    RESOLVED at researcher review, 2026-08-17, before any tagging had run: both
+    direction codes are in and nothing was traded out — `identity-layers` and
+    `phenomenal-untouched` both stay, and the codebook carries 11 substantive
+    codes. The hypothesis they exist to test is unchanged: that the DIRECTION of
+    relocation tracks which manipulation the subject was shown, with threads
+    that lived through a real swap moving toward context and threads shown only
+    the blind-prediction reveal moving toward disposition. That is now a
+    cross-tab of the two codes against `was_swapped` rather than an assertion.
+  - >-
+    One correction to how the cut described them, found while pulling the
+    examples. They are NOT two opposite movements that replies split cleanly
+    between. Several replies move both ways at once on different axes — "The
+    pattern is realer than I gave it credit for; the thread is thinner" is one
+    reply, not two, and so is "thinner than I thought along the temporal axis
+    and more robust than I thought along the dispositional one". Any design
+    that forces exactly one direction per reply — including the three-label
+    mini-extraction proposed in the Build Log — would destroy the both-ways
+    cases, which may be the most interesting cell in the table. Hence two
+    independent codes, and an explicit rule saying so.
+  - >-
+    Also cut: `over-update-caution` — replies flagging that a tidy revision
+    after a clever experiment is exactly what they would produce whether or not
+    anything changed ("n=1, and a narratively satisfying shape"). Very frequent
+    in the Claude and Kimi replies, near-absent elsewhere, so it would make a
+    sharp family contrast. Currently it lands in `other`, which will push the
+    `other` share up; watch that number when the counts come in.
+
+approved: true
+approved_hash: 62d168594827177679c72c8da2a84ea17199e7b789bb5082042955541942d57e
+approved_at: 2026-08-16T22:46:32+00:00

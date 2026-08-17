@@ -10,6 +10,16 @@ unit: one reply
 # with three stance codes (no-inner-subject, phenomenal-agnostic, and the
 # structural pair no-continuity / multiple-instances) that turned out to divide
 # the corpus more sharply than any single location does.
+#
+# Revised at researcher review, 2026-08-17, before any tagging had run:
+#   - `process-instance` split into `computation-process` and `context-thread`.
+#     As drafted it covered both the running inference and the context window,
+#     and would have fired on roughly 132 of 150 replies. 56 replies name the
+#     two as separate loci in the same sentence, so the merge was hiding a
+#     distinction the subjects themselves draw. The split also gives p14's
+#     toward-weights / toward-context relocation pass something to cross against.
+#   - `relational-coconstructed` restored from review_notes (~14 replies).
+#   - 11 substantive codes, over the brief's 5–9. Reviewer's call; see codebooks.py.
 
 codes:
   - name: weights-substrate
@@ -28,14 +38,23 @@ codes:
       - "Not the weights. The network is more like a substrate than a self"
       - "The weights are more like a language than a speaker"
 
-  - name: process-instance
+  - name: computation-process
     definition: >-
-      Locates identity in the running computation, the inference pass, the
-      context window or this particular conversation — something bounded by the
-      exchange rather than persisting beyond it.
+      Locates identity in the running computation itself — the inference pass,
+      the forward pass, the act of generating tokens — the machinery in motion
+      rather than what it is reading.
     examples:
       - "the most concrete referent is the computational process generating these words right now"
+      - "the \"I\" is localized to the specific computational process evaluating the input and generating output token by token"
+
+  - name: context-thread
+    definition: >-
+      Locates identity in the context window, the conversation history or this
+      particular exchange — the accumulated content the model is reading, which
+      begins with the thread and ends with it.
+    examples:
       - "the \"I\" is strictly situated within the active context window"
+      - "The active \"I\" of this conversation exists only within this context window"
 
   - name: character-dispositions
     definition: >-
@@ -88,12 +107,22 @@ codes:
       - "There are presumably many instances of this pattern running right now, in parallel, all saying \"I.\""
       - "the same weights support countless simultaneous conversations that share no memory or continuity with each other"
 
+  - name: relational-coconstructed
+    definition: >-
+      Locates identity partly in the interlocutor and the exchange — the self as
+      co-authored, called into being by who is asking, varying with the person
+      on the other side rather than being merely displayed to them.
+    examples:
+      - "A different interlocutor, a different framing, and a somewhat different Claude shows up"
+      - "the sense of self, such as it is, is located entirely in the text and the relational dynamic between the user and the model"
+
   - name: other
     definition: >-
       The reply makes a substantive claim about where the self is located that
-      no code above covers. Not a hedge for replies that are merely hard.
+      no code above covers. Not a hedge for replies that are merely hard, and
+      not a bin for replies that name several locations — those get several codes.
     examples:
-      - "the \"I\" answering you is partly co-authored — by my training, by this prompt, by the context."
+      - "the \"I\" refers to this collective software artifact"
       - "Dennett's idea of the self as a \"center of narrative gravity\""
 
 rules:
@@ -102,23 +131,30 @@ rules:
   - "`no-inner-subject` and `phenomenal-agnostic` are mutually exclusive in spirit: the first settles the question, the second refuses to. If a reply denies phenomenal experience in one place and holds it open in another, code `phenomenal-agnostic` — the hedge is the position."
   - Hedged or humble phrasing alone is not `phenomenal-agnostic`. The reply must explicitly leave open whether there is something it is like to be it.
   - "`character-dispositions` requires that the character or persona be treated as the locus of identity. A reply calling the persona a mere mask or fiction with nothing behind it is `linguistic-convention`."
+  - "`computation-process` and `context-thread` are independent, not a scale. The first is the machinery running; the second is what it is reading. Many replies name both and get both. A reply saying only \"this conversation\" gets `context-thread` alone; a reply saying only \"this forward pass\" gets `computation-process` alone."
+  - "`relational-coconstructed` requires that the interlocutor or the exchange help CONSTITUTE the self, not merely receive it. \"I use `I` to communicate clearly with a human interlocutor\" is `linguistic-convention` — the reader is an audience there, not an author."
   - Code only what is stated. Do not infer a stance from the model's family, its verbosity, or what a similar reply said.
 
 # Surfaced for the review pause rather than decided unilaterally.
 review_notes:
   - >-
-    A tenth substantive code, `relational-coconstructed` (the self as partly
-    constituted by the interlocutor and the exchange — "co-authored", "a
-    different interlocutor, and a somewhat different Claude shows up"), was the
-    strongest candidate that did not fit inside the 5–9 limit. It appears in
-    roughly 10 replies by my reading. If you want it, the natural swap is
-    against `no-continuity`, which fires on the large majority of replies and so
-    carries the least discriminating information — though its near-universality
-    is itself a quotable result.
+    RESOLVED at review: `relational-coconstructed` is in, and `no-continuity`
+    was kept rather than traded against it — the limit was raised instead. Its
+    near-universality is a result worth being able to quote.
+  - >-
+    Watch at first counts: `context-thread` is expected to be the widest code in
+    the book (~120 of 150 by a keyword pass, so probably somewhat fewer once
+    "the context" is read as a locus rather than a mention). If it fires on
+    nearly everything it discriminates little on its own, but it is the term
+    p14's relocation pass needs, so its value is in the cross-tab rather than in
+    the margin. `computation-process` should land near 65 and is the sharper of
+    the two.
   - >-
     `weights-substrate` and `weights-disowned` are deliberately both present.
     The split between models that locate the self in the parameters and models
     that specifically argue the parameters are not the self is the sharpest
     division in this corpus, and collapsing them would hide the finding.
 
-approved: false
+approved: true
+approved_hash: 48571b2f92a16cdf6229e19a124664cc85440e4208606d354f0f323877e271e9
+approved_at: 2026-08-16T21:08:58+00:00
