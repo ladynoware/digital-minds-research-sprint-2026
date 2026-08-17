@@ -3,7 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Qualitative results — Who Am I?</title>
+    <title>Quantitative results — Who Am I?</title>
+    <meta
+      name="description"
+      content="Every quantitative result of the Who Am I? survey: detection rates, consent, and what subjects asked for once the design was disclosed."
+    />
     <link rel="stylesheet" href="assets/theme.css" />
     <link rel="stylesheet" href="assets/site.css" />
   </head>
@@ -15,8 +19,8 @@
         <a class="masthead__title" href="index.html">Who Am I?</a>
         <nav class="nav">
           <a href="index.html">Home</a>
-          <a href="quantitative.html">Quantitative Results</a>
-          <a href="qualitative.html" aria-current="page">Qualitative Results</a>
+          <a href="quantitative.html" aria-current="page">Quantitative Results</a>
+          <a href="qualitative.html">Qualitative Results</a>
           <a href="messages.html">Messages</a>
         </nav>
       </div>
@@ -24,13 +28,13 @@
 
     <main class="wrap">
       <section class="result-head">
-        <p class="eyebrow">Content analysis</p>
-        <h1 class="measure">Qualitative results</h1>
+        <p class="eyebrow">Rates and per-model breakdowns</p>
+        <h1 class="measure">Quantitative results</h1>
       </section>
 
       <section>
-        <ul class="cards" id="topic-cards">
-          <li class="loading">Loading…</li>
+        <ul class="cards" id="result-cards">
+          <li class="loading">Loading results…</li>
         </ul>
       </section>
     </main>
@@ -42,6 +46,6 @@
     </footer>
 
     <script src="assets/data.js"></script>
-    <script src="assets/qualitative.js"></script>
+    <script src="assets/quantitative-list.js"></script>
   </body>
 </html>

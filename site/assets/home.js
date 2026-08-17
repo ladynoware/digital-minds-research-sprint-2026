@@ -1,9 +1,9 @@
 /* =============================================================================
    home.js — the front page.
 
-   The only thing the home page loads from the data is the three headline rates
-   in the "key rates" tile. Everything else on it is editorial. The results
-   directory lives on results.html.
+   The only thing the home page loads from the data is the headline rates in the
+   "key rates" tile. Everything else on it is editorial. The results directory
+   lives on quantitative.html.
    ============================================================================= */
 
 (async () => {
