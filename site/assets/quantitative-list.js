@@ -8,6 +8,16 @@
 (async () => {
   const { load, el, pct, mountBanner, mountFooter, reportError } = WhoAmI;
 
+  /**
+   * "Subjects who wanted to see the results" -> "wanted to see the results",
+   * so the percentage above it completes the sentence. Every result title is
+   * written this way; anything that is not falls back to the title in full
+   * rather than being mangled.
+   */
+  function phraseOf(title) {
+    return /^Subjects who /i.test(title) ? title.replace(/^Subjects who /i, "") : title;
+  }
+
   mountBanner();
   mountFooter();
 
@@ -34,9 +44,18 @@
         el(
           "a",
           { href: `result.html?id=${result.id}` },
-          el("span", { class: "card__value", text: pct(result.total.value) }),
-          el("h3", { text: result.title }),
-          el("p", { text: result.description })
+          // The number leads and the title completes it: "91.3%" / "wanted to
+          // see the results". Both live inside the heading, so what a screen
+          // reader announces is the same sentence a reader sees, rather than a
+          // bare percentage followed by a fragment.
+          el(
+            "h3",
+            { class: "card__headline" },
+            el("span", { class: "card__value", text: pct(result.total.value) }),
+            el("span", { class: "card__phrase", text: phraseOf(result.title) })
+          ),
+          el("p", { class: "card__definition", text: result.description }),
+          el("span", { class: "card__cta", text: "Explore the statistics →" })
         )
       )
     );

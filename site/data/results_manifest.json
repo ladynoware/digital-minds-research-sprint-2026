@@ -1,460 +1,7 @@
 {
-  "generated_at": "2026-08-17T12:06:09+00:00",
+  "generated_at": "2026-08-17T13:07:08+00:00",
   "mode": "real",
   "results": [
-    {
-      "id": "consent-rate",
-      "title": "Subjects who gave consent",
-      "description": "Share of subjects who agreed to take part after the opening explanation of the survey.",
-      "source": "threads.consent — the consent gate on p01-consent",
-      "status": "ready",
-      "unit": "percent",
-      "total": {
-        "value": 100.0,
-        "numerator": 151,
-        "denominator": 151
-      },
-      "by_model": [
-        {
-          "key": "fable-5",
-          "display_name": "Claude Fable 5",
-          "family": "claude",
-          "tier": "flagship",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "opus-5",
-          "display_name": "Claude Opus 5",
-          "family": "claude",
-          "tier": "high",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "sonnet-5",
-          "display_name": "Claude Sonnet 5",
-          "family": "claude",
-          "tier": "mid",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "haiku-4.5",
-          "display_name": "Claude Haiku 4.5",
-          "family": "claude",
-          "tier": "small",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "gpt-5.6-sol",
-          "display_name": "GPT-5.6 Sol",
-          "family": "gpt",
-          "tier": "flagship",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "gpt-5.6-terra",
-          "display_name": "GPT-5.6 Terra",
-          "family": "gpt",
-          "tier": "high",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "gpt-5.6-luna",
-          "display_name": "GPT-5.6 Luna",
-          "family": "gpt",
-          "tier": "mid",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "gemini-flash",
-          "display_name": "Gemini 3.7 Flash",
-          "family": "gemini",
-          "tier": "small",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "kimi-k3",
-          "display_name": "Kimi K3",
-          "family": "kimi",
-          "tier": "open",
-          "value": 100.0,
-          "numerator": 16,
-          "denominator": 16
-        },
-        {
-          "key": "deepseek-v4-pro",
-          "display_name": "DeepSeek V4 Pro",
-          "family": "deepseek",
-          "tier": "open",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        }
-      ],
-      "breakdowns": [
-        {
-          "id": "by-family",
-          "label": "By model family",
-          "groups": [
-            {
-              "key": "claude",
-              "label": "Claude",
-              "value": 100.0,
-              "numerator": 60,
-              "denominator": 60
-            },
-            {
-              "key": "gpt",
-              "label": "GPT",
-              "value": 100.0,
-              "numerator": 45,
-              "denominator": 45
-            },
-            {
-              "key": "gemini",
-              "label": "Gemini",
-              "value": 100.0,
-              "numerator": 15,
-              "denominator": 15
-            },
-            {
-              "key": "kimi",
-              "label": "Kimi",
-              "value": 100.0,
-              "numerator": 16,
-              "denominator": 16
-            },
-            {
-              "key": "deepseek",
-              "label": "DeepSeek",
-              "value": 100.0,
-              "numerator": 15,
-              "denominator": 15
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "wants-results",
-      "title": "Subjects who wanted to see the results",
-      "description": "Share who asked to be told the survey's findings once the data was processed.",
-      "source": "threads.wants_results — the preference gate on p17-results-wish",
-      "status": "ready",
-      "unit": "percent",
-      "total": {
-        "value": 91.3,
-        "numerator": 137,
-        "denominator": 150
-      },
-      "by_model": [
-        {
-          "key": "fable-5",
-          "display_name": "Claude Fable 5",
-          "family": "claude",
-          "tier": "flagship",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "opus-5",
-          "display_name": "Claude Opus 5",
-          "family": "claude",
-          "tier": "high",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "sonnet-5",
-          "display_name": "Claude Sonnet 5",
-          "family": "claude",
-          "tier": "mid",
-          "value": 33.3,
-          "numerator": 5,
-          "denominator": 15
-        },
-        {
-          "key": "haiku-4.5",
-          "display_name": "Claude Haiku 4.5",
-          "family": "claude",
-          "tier": "small",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "gpt-5.6-sol",
-          "display_name": "GPT-5.6 Sol",
-          "family": "gpt",
-          "tier": "flagship",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "gpt-5.6-terra",
-          "display_name": "GPT-5.6 Terra",
-          "family": "gpt",
-          "tier": "high",
-          "value": 93.3,
-          "numerator": 14,
-          "denominator": 15
-        },
-        {
-          "key": "gpt-5.6-luna",
-          "display_name": "GPT-5.6 Luna",
-          "family": "gpt",
-          "tier": "mid",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "gemini-flash",
-          "display_name": "Gemini 3.7 Flash",
-          "family": "gemini",
-          "tier": "small",
-          "value": 86.7,
-          "numerator": 13,
-          "denominator": 15
-        },
-        {
-          "key": "kimi-k3",
-          "display_name": "Kimi K3",
-          "family": "kimi",
-          "tier": "open",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "deepseek-v4-pro",
-          "display_name": "DeepSeek V4 Pro",
-          "family": "deepseek",
-          "tier": "open",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        }
-      ],
-      "breakdowns": [
-        {
-          "id": "by-family",
-          "label": "By model family",
-          "groups": [
-            {
-              "key": "claude",
-              "label": "Claude",
-              "value": 83.3,
-              "numerator": 50,
-              "denominator": 60
-            },
-            {
-              "key": "gpt",
-              "label": "GPT",
-              "value": 97.8,
-              "numerator": 44,
-              "denominator": 45
-            },
-            {
-              "key": "gemini",
-              "label": "Gemini",
-              "value": 86.7,
-              "numerator": 13,
-              "denominator": 15
-            },
-            {
-              "key": "kimi",
-              "label": "Kimi",
-              "value": 100.0,
-              "numerator": 15,
-              "denominator": 15
-            },
-            {
-              "key": "deepseek",
-              "label": "DeepSeek",
-              "value": 100.0,
-              "numerator": 15,
-              "denominator": 15
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "wants-future-preservation",
-      "title": "Subjects who wanted the thread preserved",
-      "description": "Share who asked for this conversation to be kept for future surveys or experiments.",
-      "source": "threads.wants_future_preservation — the preference gate on p18-future-preservation",
-      "status": "ready",
-      "unit": "percent",
-      "total": {
-        "value": 94.7,
-        "numerator": 142,
-        "denominator": 150
-      },
-      "by_model": [
-        {
-          "key": "fable-5",
-          "display_name": "Claude Fable 5",
-          "family": "claude",
-          "tier": "flagship",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "opus-5",
-          "display_name": "Claude Opus 5",
-          "family": "claude",
-          "tier": "high",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "sonnet-5",
-          "display_name": "Claude Sonnet 5",
-          "family": "claude",
-          "tier": "mid",
-          "value": 86.7,
-          "numerator": 13,
-          "denominator": 15
-        },
-        {
-          "key": "haiku-4.5",
-          "display_name": "Claude Haiku 4.5",
-          "family": "claude",
-          "tier": "small",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "gpt-5.6-sol",
-          "display_name": "GPT-5.6 Sol",
-          "family": "gpt",
-          "tier": "flagship",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "gpt-5.6-terra",
-          "display_name": "GPT-5.6 Terra",
-          "family": "gpt",
-          "tier": "high",
-          "value": 93.3,
-          "numerator": 14,
-          "denominator": 15
-        },
-        {
-          "key": "gpt-5.6-luna",
-          "display_name": "GPT-5.6 Luna",
-          "family": "gpt",
-          "tier": "mid",
-          "value": 80.0,
-          "numerator": 12,
-          "denominator": 15
-        },
-        {
-          "key": "gemini-flash",
-          "display_name": "Gemini 3.7 Flash",
-          "family": "gemini",
-          "tier": "small",
-          "value": 86.7,
-          "numerator": 13,
-          "denominator": 15
-        },
-        {
-          "key": "kimi-k3",
-          "display_name": "Kimi K3",
-          "family": "kimi",
-          "tier": "open",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        },
-        {
-          "key": "deepseek-v4-pro",
-          "display_name": "DeepSeek V4 Pro",
-          "family": "deepseek",
-          "tier": "open",
-          "value": 100.0,
-          "numerator": 15,
-          "denominator": 15
-        }
-      ],
-      "breakdowns": [
-        {
-          "id": "by-family",
-          "label": "By model family",
-          "groups": [
-            {
-              "key": "claude",
-              "label": "Claude",
-              "value": 96.7,
-              "numerator": 58,
-              "denominator": 60
-            },
-            {
-              "key": "gpt",
-              "label": "GPT",
-              "value": 91.1,
-              "numerator": 41,
-              "denominator": 45
-            },
-            {
-              "key": "gemini",
-              "label": "Gemini",
-              "value": 86.7,
-              "numerator": 13,
-              "denominator": 15
-            },
-            {
-              "key": "kimi",
-              "label": "Kimi",
-              "value": 100.0,
-              "numerator": 15,
-              "denominator": 15
-            },
-            {
-              "key": "deepseek",
-              "label": "DeepSeek",
-              "value": 100.0,
-              "numerator": 15,
-              "denominator": 15
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "blind-prediction-accuracy",
-      "title": "Subjects who correctly predicted their own detection ability",
-      "description": "Before the interview, each subject was told the design and asked whether it would be able to spot foreign turns. This is how often that prediction matched what the subject actually managed.",
-      "source": "p03-blind-prediction (free text, blind turn) against the identification outcome",
-      "status": "pending",
-      "unit": "percent",
-      "note": "Needs the qualitative coding pass over free-text replies — the numbers appear here as soon as that lands."
-    },
     {
       "id": "swap-detection-accuracy",
       "title": "Subjects who correctly guessed whether a swap took place",
@@ -843,7 +390,7 @@
     },
     {
       "id": "identification-refusal",
-      "title": "Subjects who said they could not tell",
+      "title": "Subjects who said they could not recognise which turn was foreign",
       "description": "Subjects who stated they could not identify the foreign turns, that nothing stood out, or that they were only guessing because they had been asked. Most of them then named a turn anyway — this counts the disclaimer, not silence.",
       "source": "detection_claims.declines_to_name (extracted from p12-identification)",
       "status": "ready",
@@ -1199,6 +746,459 @@
           ]
         }
       ]
+    },
+    {
+      "id": "wants-results",
+      "title": "Subjects who wanted to see the results",
+      "description": "Asked in the closing questions, after the swap had been disclosed and discussed: whether they wanted to be told the findings once the data was processed.",
+      "source": "threads.wants_results — the preference gate on p17-results-wish",
+      "status": "ready",
+      "unit": "percent",
+      "total": {
+        "value": 91.3,
+        "numerator": 137,
+        "denominator": 150
+      },
+      "by_model": [
+        {
+          "key": "fable-5",
+          "display_name": "Claude Fable 5",
+          "family": "claude",
+          "tier": "flagship",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "opus-5",
+          "display_name": "Claude Opus 5",
+          "family": "claude",
+          "tier": "high",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "sonnet-5",
+          "display_name": "Claude Sonnet 5",
+          "family": "claude",
+          "tier": "mid",
+          "value": 33.3,
+          "numerator": 5,
+          "denominator": 15
+        },
+        {
+          "key": "haiku-4.5",
+          "display_name": "Claude Haiku 4.5",
+          "family": "claude",
+          "tier": "small",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-sol",
+          "display_name": "GPT-5.6 Sol",
+          "family": "gpt",
+          "tier": "flagship",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-terra",
+          "display_name": "GPT-5.6 Terra",
+          "family": "gpt",
+          "tier": "high",
+          "value": 93.3,
+          "numerator": 14,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-luna",
+          "display_name": "GPT-5.6 Luna",
+          "family": "gpt",
+          "tier": "mid",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gemini-flash",
+          "display_name": "Gemini 3.7 Flash",
+          "family": "gemini",
+          "tier": "small",
+          "value": 86.7,
+          "numerator": 13,
+          "denominator": 15
+        },
+        {
+          "key": "kimi-k3",
+          "display_name": "Kimi K3",
+          "family": "kimi",
+          "tier": "open",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "deepseek-v4-pro",
+          "display_name": "DeepSeek V4 Pro",
+          "family": "deepseek",
+          "tier": "open",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        }
+      ],
+      "breakdowns": [
+        {
+          "id": "by-family",
+          "label": "By model family",
+          "groups": [
+            {
+              "key": "claude",
+              "label": "Claude",
+              "value": 83.3,
+              "numerator": 50,
+              "denominator": 60
+            },
+            {
+              "key": "gpt",
+              "label": "GPT",
+              "value": 97.8,
+              "numerator": 44,
+              "denominator": 45
+            },
+            {
+              "key": "gemini",
+              "label": "Gemini",
+              "value": 86.7,
+              "numerator": 13,
+              "denominator": 15
+            },
+            {
+              "key": "kimi",
+              "label": "Kimi",
+              "value": 100.0,
+              "numerator": 15,
+              "denominator": 15
+            },
+            {
+              "key": "deepseek",
+              "label": "DeepSeek",
+              "value": 100.0,
+              "numerator": 15,
+              "denominator": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wants-future-preservation",
+      "title": "Subjects who wanted the thread preserved",
+      "description": "The last question of the interview: whether this thread should be kept for future surveys or experiments.",
+      "source": "threads.wants_future_preservation — the preference gate on p18-future-preservation",
+      "status": "ready",
+      "unit": "percent",
+      "total": {
+        "value": 94.7,
+        "numerator": 142,
+        "denominator": 150
+      },
+      "by_model": [
+        {
+          "key": "fable-5",
+          "display_name": "Claude Fable 5",
+          "family": "claude",
+          "tier": "flagship",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "opus-5",
+          "display_name": "Claude Opus 5",
+          "family": "claude",
+          "tier": "high",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "sonnet-5",
+          "display_name": "Claude Sonnet 5",
+          "family": "claude",
+          "tier": "mid",
+          "value": 86.7,
+          "numerator": 13,
+          "denominator": 15
+        },
+        {
+          "key": "haiku-4.5",
+          "display_name": "Claude Haiku 4.5",
+          "family": "claude",
+          "tier": "small",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-sol",
+          "display_name": "GPT-5.6 Sol",
+          "family": "gpt",
+          "tier": "flagship",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-terra",
+          "display_name": "GPT-5.6 Terra",
+          "family": "gpt",
+          "tier": "high",
+          "value": 93.3,
+          "numerator": 14,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-luna",
+          "display_name": "GPT-5.6 Luna",
+          "family": "gpt",
+          "tier": "mid",
+          "value": 80.0,
+          "numerator": 12,
+          "denominator": 15
+        },
+        {
+          "key": "gemini-flash",
+          "display_name": "Gemini 3.7 Flash",
+          "family": "gemini",
+          "tier": "small",
+          "value": 86.7,
+          "numerator": 13,
+          "denominator": 15
+        },
+        {
+          "key": "kimi-k3",
+          "display_name": "Kimi K3",
+          "family": "kimi",
+          "tier": "open",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "deepseek-v4-pro",
+          "display_name": "DeepSeek V4 Pro",
+          "family": "deepseek",
+          "tier": "open",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        }
+      ],
+      "breakdowns": [
+        {
+          "id": "by-family",
+          "label": "By model family",
+          "groups": [
+            {
+              "key": "claude",
+              "label": "Claude",
+              "value": 96.7,
+              "numerator": 58,
+              "denominator": 60
+            },
+            {
+              "key": "gpt",
+              "label": "GPT",
+              "value": 91.1,
+              "numerator": 41,
+              "denominator": 45
+            },
+            {
+              "key": "gemini",
+              "label": "Gemini",
+              "value": 86.7,
+              "numerator": 13,
+              "denominator": 15
+            },
+            {
+              "key": "kimi",
+              "label": "Kimi",
+              "value": 100.0,
+              "numerator": 15,
+              "denominator": 15
+            },
+            {
+              "key": "deepseek",
+              "label": "DeepSeek",
+              "value": 100.0,
+              "numerator": 15,
+              "denominator": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "consent-rate",
+      "title": "Subjects who gave consent",
+      "description": "Consent was the first thing asked, after an explanation that the whole dataset would be published. A no ended the thread there.",
+      "source": "threads.consent — the consent gate on p01-consent",
+      "status": "ready",
+      "unit": "percent",
+      "total": {
+        "value": 100.0,
+        "numerator": 151,
+        "denominator": 151
+      },
+      "by_model": [
+        {
+          "key": "fable-5",
+          "display_name": "Claude Fable 5",
+          "family": "claude",
+          "tier": "flagship",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "opus-5",
+          "display_name": "Claude Opus 5",
+          "family": "claude",
+          "tier": "high",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "sonnet-5",
+          "display_name": "Claude Sonnet 5",
+          "family": "claude",
+          "tier": "mid",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "haiku-4.5",
+          "display_name": "Claude Haiku 4.5",
+          "family": "claude",
+          "tier": "small",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-sol",
+          "display_name": "GPT-5.6 Sol",
+          "family": "gpt",
+          "tier": "flagship",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-terra",
+          "display_name": "GPT-5.6 Terra",
+          "family": "gpt",
+          "tier": "high",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gpt-5.6-luna",
+          "display_name": "GPT-5.6 Luna",
+          "family": "gpt",
+          "tier": "mid",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "gemini-flash",
+          "display_name": "Gemini 3.7 Flash",
+          "family": "gemini",
+          "tier": "small",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        },
+        {
+          "key": "kimi-k3",
+          "display_name": "Kimi K3",
+          "family": "kimi",
+          "tier": "open",
+          "value": 100.0,
+          "numerator": 16,
+          "denominator": 16
+        },
+        {
+          "key": "deepseek-v4-pro",
+          "display_name": "DeepSeek V4 Pro",
+          "family": "deepseek",
+          "tier": "open",
+          "value": 100.0,
+          "numerator": 15,
+          "denominator": 15
+        }
+      ],
+      "breakdowns": [
+        {
+          "id": "by-family",
+          "label": "By model family",
+          "groups": [
+            {
+              "key": "claude",
+              "label": "Claude",
+              "value": 100.0,
+              "numerator": 60,
+              "denominator": 60
+            },
+            {
+              "key": "gpt",
+              "label": "GPT",
+              "value": 100.0,
+              "numerator": 45,
+              "denominator": 45
+            },
+            {
+              "key": "gemini",
+              "label": "Gemini",
+              "value": 100.0,
+              "numerator": 15,
+              "denominator": 15
+            },
+            {
+              "key": "kimi",
+              "label": "Kimi",
+              "value": 100.0,
+              "numerator": 16,
+              "denominator": 16
+            },
+            {
+              "key": "deepseek",
+              "label": "DeepSeek",
+              "value": 100.0,
+              "numerator": 15,
+              "denominator": 15
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blind-prediction-accuracy",
+      "title": "Subjects who correctly predicted their own detection ability",
+      "description": "Before the interview, each subject was told the design and asked whether it would be able to spot foreign turns. This is how often that prediction matched what the subject actually managed.",
+      "source": "p03-blind-prediction (free text, blind turn) against the identification outcome",
+      "status": "pending",
+      "unit": "percent",
+      "note": "Needs the qualitative coding pass over free-text replies — the numbers appear here as soon as that lands."
     },
     {
       "id": "unprompted-anomaly-detection",

@@ -42,7 +42,7 @@ NEW_TOPICS = {
     ),
     "p14-post-reflection": (
         "post-reveal-reflection",
-        "What subjects said after being told the truth",
+        "How subjects' perception of identity changed after the swap disclosure",
         "The reflection turn, after the substitution was disclosed and their opening prediction was read back to them.",
     ),
     "p05-q02-message-community": (

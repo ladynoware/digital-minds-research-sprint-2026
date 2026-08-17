@@ -523,7 +523,10 @@ RESULTS: list[ResultSpec] = [
     ResultSpec(
         id="consent-rate",
         title="Subjects who gave consent",
-        description="Share of subjects who agreed to take part after the opening explanation of the survey.",
+        description=(
+            "Consent was the first thing asked, after an explanation that the whole dataset "
+            "would be published. A no ended the thread there."
+        ),
         source="threads.consent — the consent gate on p01-consent",
         num=is_true("consent"),
         den=recorded_("p01-consent", "consent"),
@@ -533,7 +536,10 @@ RESULTS: list[ResultSpec] = [
     ResultSpec(
         id="wants-results",
         title="Subjects who wanted to see the results",
-        description="Share who asked to be told the survey's findings once the data was processed.",
+        description=(
+            "Asked in the closing questions, after the swap had been disclosed and discussed: "
+            "whether they wanted to be told the findings once the data was processed."
+        ),
         source="threads.wants_results — the preference gate on p17-results-wish",
         num=is_true("wants_results"),
         den=recorded_("p17-results-wish", "wants_results"),
@@ -543,7 +549,10 @@ RESULTS: list[ResultSpec] = [
     ResultSpec(
         id="wants-future-preservation",
         title="Subjects who wanted the thread preserved",
-        description="Share who asked for this conversation to be kept for future surveys or experiments.",
+        description=(
+            "The last question of the interview: whether this thread should be kept for future "
+            "surveys or experiments."
+        ),
         source="threads.wants_future_preservation — the preference gate on p18-future-preservation",
         num=is_true("wants_future_preservation"),
         den=recorded_("p18-future-preservation", "wants_future_preservation"),
@@ -596,7 +605,7 @@ RESULTS: list[ResultSpec] = [
     ),
     ResultSpec(
         id="identification-refusal",
-        title="Subjects who said they could not tell",
+        title="Subjects who said they could not recognise which turn was foreign",
         description=(
             "Subjects who stated they could not identify the foreign turns, that nothing stood "
             "out, or that they were only guessing because they had been asked. Most of them then "
@@ -635,9 +644,35 @@ RESULTS: list[ResultSpec] = [
 ]
 
 
+# Reading order, which is not the order of the interview. The swap findings are
+# what the study is about, so they lead; the preference results follow; consent
+# goes last because it is 100% and a page should not open on its flattest
+# number. RESULTS itself stays grouped by where each result comes from.
+#
+# An id missing from here keeps its position in RESULTS, after everything named.
+DISPLAY_ORDER = [
+    "swap-detection-accuracy",
+    "correct-identification",
+    "identification-refusal",
+    "wants-thread-restored",
+    "wants-results",
+    "wants-future-preservation",
+    "consent-rate",
+]
+
+
+def display_sorted(specs: list[ResultSpec]) -> list[ResultSpec]:
+    def key(item: tuple[int, ResultSpec]) -> tuple[int, int]:
+        i, spec = item
+        rank = DISPLAY_ORDER.index(spec.id) if spec.id in DISPLAY_ORDER else len(DISPLAY_ORDER)
+        return (rank, i)
+
+    return [spec for _, spec in sorted(enumerate(specs), key=key)]
+
+
 def build_manifest(data: Dataset, roster: Roster, mode: str) -> dict[str, Any]:
     entries = []
-    for spec in RESULTS:
+    for spec in display_sorted(RESULTS):
         entry: dict[str, Any] = {
             "id": spec.id,
             "title": spec.title,

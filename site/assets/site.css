@@ -462,6 +462,15 @@ section {
   font-size: var(--t-h3);
 }
 
+/* Two lines' worth of space whether the title needs them or not, with a rule
+   under it — so the rule sits at the same height on every card in a row and
+   the numbers below it start on the same line. */
+.cards .card h3 {
+  min-height: calc(2.4em + var(--s-2) + 1px);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--c-rule);
+}
+
 .card p {
   margin: 0;
   font-size: var(--t-small);
@@ -470,7 +479,8 @@ section {
 
 .card__value {
   font-family: var(--font-display);
-  font-size: 1.55rem;
+  font-size: 2.1rem;
+  line-height: 1;
   color: var(--c-ink);
 }
 
@@ -715,6 +725,16 @@ tbody tr:last-child td {
   padding: 0 3px;
 }
 
+/* Sits under every LLM-written summary. Quiet, but not hidden: it is the same
+   caveat the paper makes, and a reader can land on a topic page directly. */
+.disclaimer {
+  margin: var(--s-5) 0 0;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--c-rule);
+  font-size: var(--t-small);
+  color: var(--c-ink-faint);
+}
+
 .notice-inline {
   background: var(--c-pending-bg);
   border-left: 3px solid var(--c-pending-rule);
@@ -725,14 +745,47 @@ tbody tr:last-child td {
   max-width: var(--measure);
 }
 
-.card__lead {
+/* The headline share, and what the reader is being told that share agreed on. */
+.card__stat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin: var(--s-2) 0 0;
+}
+
+/* Number first, then the phrase that completes it. Both inside the heading. */
+.card__headline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+/* Two lines' worth whether the phrase needs them or not, so the rule under the
+   heading lands at the same height on every card in a row. */
+.card__phrase {
+  display: block;
+  min-height: 2.4em;
+}
+
+.card__definition {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--c-ink-soft);
+}
+
+.card__contrast {
+  margin: 0;
   font-size: var(--t-small);
   color: var(--c-ink-faint);
 }
 
-.card__lead code {
-  font-family: var(--font-mono);
-  font-size: 0.9em;
+/* Pinned to the foot of the card, so the call to action lines up across a row
+   whatever length the definitions above it run to. */
+.card__cta {
+  margin-top: auto;
+  padding-top: var(--s-3);
+  font-size: var(--t-small);
+  color: var(--c-accent);
 }
 
 .pill--quiet {

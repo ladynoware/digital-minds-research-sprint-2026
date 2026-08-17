@@ -98,21 +98,26 @@
     )
   );
 
-  // Exhibits, not statistics. Saying so up front is the difference between a
-  // reader treating these counts as a measurement and treating them as a guide
-  // to reading the replies.
-  if (topic.light_touch) {
-    head.append(
-      el("p", {
-        class: "notice-inline",
-        text:
-          "Tagged lightly and curated for reading rather than measured. Treat these counts as a " +
-          "way into the replies, not as a statistic.",
-      })
-    );
-  }
+  // `light_touch` is deliberately not surfaced. It marked two topics as tagged
+  // more lightly than the rest, but the phrasing said that in a way no reader
+  // could act on, and the caveat it was reaching for applies to the whole
+  // qualitative pass rather than to two topics — a single project-level note
+  // belongs in the footer instead. The flag stays in qualitative.json.
 
   /* -- the summary -------------------------------------------------------- */
+
+  // Taken from the paper's own Technical Implementation and Limitations
+  // sections, so the site and the paper caveat this in the same words. It sits
+  // under every summary because a reader can arrive on any single topic page
+  // without passing anything else that would tell them.
+  const SUMMARY_DISCLAIMER =
+    "This summary was written by an LLM. The qualitative analysis was LLM-assisted with minimal " +
+    "human oversight due to time constraints: codebooks were assembled by Opus in Claude Code, " +
+    "tagging was performed by Sonnet or Haiku via API, and the synthesis by Opus again. Executed " +
+    "in one evening, it was hasty and needed many concessions and compromises. For any real-world " +
+    "use of this data, the codebooks and tagged results need to be carefully reviewed by a human, " +
+    "and tagging may need to be rerun on a more capable model. These qualitative results should be " +
+    "seen as illustrative.";
 
   if (topic.summary) {
     root.append(
@@ -124,7 +129,8 @@
           "div",
           { class: "prose measure" },
           Markdown.render(Markdown.stripLeadingHeading(topic.summary), { headings: true })
-        )
+        ),
+        el("p", { class: "disclaimer measure", text: SUMMARY_DISCLAIMER })
       )
     );
   }
