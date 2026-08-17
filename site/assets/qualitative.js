@@ -22,37 +22,15 @@
     return;
   }
 
-  const ready = data.topics.filter((t) => t.status === "ready").length;
-  const countEl = document.getElementById("topic-count");
-  if (countEl) {
-    countEl.textContent =
-      ready === data.topics.length
-        ? `${ready} topics`
-        : `${ready} of ${data.topics.length} coded`;
-  }
-
+  // Coded topics only. An uncoded one has nothing to show but its own title,
+  // and a card that says "in progress" reads as an unfinished site rather than
+  // as an honest gap. It reappears here by itself if the coding ever lands.
+  //
   // The method is not restated here — each topic page carries it under "How
   // this was produced", next to the codebook it actually applies to.
   cards.innerHTML = "";
   for (const topic of data.topics) {
-    const pending = topic.status !== "ready";
-
-    if (pending) {
-      cards.append(
-        el(
-          "li",
-          { class: "card card--pending" },
-          el(
-            "a",
-            { href: `topic.html?id=${topic.id}` },
-            el("span", { class: "pill", text: "Analysis in progress" }),
-            el("h3", { text: topic.title }),
-            el("p", { text: topic.description })
-          )
-        )
-      );
-      continue;
-    }
+    if (topic.status !== "ready") continue;
 
     const n = topic.counts.overall.n;
     const top = Object.entries(topic.counts.overall.pct)
