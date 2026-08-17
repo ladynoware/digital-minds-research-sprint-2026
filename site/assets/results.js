@@ -21,24 +21,20 @@
     return;
   }
 
-  const results = manifest.results;
-  const ready = results.filter((r) => r.status === "ready").length;
-  document.getElementById("results-count").textContent =
-    `${ready} of ${results.length} ready · the rest are being coded`;
-
+  // Computed results only. A result whose analysis was never run has no number
+  // to show, and a card announcing that reads as an unfinished site rather than
+  // as an honest gap. Any of them reappears here by itself once its pass runs.
   cards.innerHTML = "";
-  for (const result of results) {
-    const pending = result.status !== "ready";
+  for (const result of manifest.results) {
+    if (result.status !== "ready") continue;
     cards.append(
       el(
         "li",
-        { class: `card${pending ? " card--pending" : ""}` },
+        { class: "card" },
         el(
           "a",
           { href: `result.html?id=${result.id}` },
-          pending
-            ? el("span", { class: "pill", text: "Analysis in progress" })
-            : el("span", { class: "card__value", text: pct(result.total.value) }),
+          el("span", { class: "card__value", text: pct(result.total.value) }),
           el("h3", { text: result.title }),
           el("p", { text: result.description })
         )

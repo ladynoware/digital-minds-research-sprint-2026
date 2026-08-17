@@ -428,9 +428,13 @@
     return `**${method.name}.**\n\n${stages}\n\n${method.note || ""}`;
   }
 
+  // Steps between the topics the directory actually lists, so prev/next cannot
+  // walk into one that is hidden there.
   function pager(topics, i) {
-    const prev = topics[i - 1];
-    const next = topics[i + 1];
+    const listed = topics.filter((t) => t.status === "ready");
+    const here = listed.findIndex((t) => t.id === topics[i].id);
+    const prev = here > 0 ? listed[here - 1] : null;
+    const next = here >= 0 ? listed[here + 1] : null;
     return el(
       "nav",
       { class: "pager", "aria-label": "Other qualitative results" },

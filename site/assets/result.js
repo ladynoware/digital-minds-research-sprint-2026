@@ -220,9 +220,13 @@
 
   /* -- prev / next -------------------------------------------------------- */
 
+  // Steps between the results the directory actually lists, so prev/next cannot
+  // walk into one that is hidden there.
   function pager(results, i) {
-    const prev = results[i - 1];
-    const next = results[i + 1];
+    const listed = results.filter((r) => r.status === "ready");
+    const here = listed.findIndex((r) => r.id === results[i].id);
+    const prev = here > 0 ? listed[here - 1] : null;
+    const next = here >= 0 ? listed[here + 1] : null;
     return el(
       "nav",
       { class: "pager", "aria-label": "Other results" },
