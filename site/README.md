@@ -27,6 +27,20 @@ art-directing. `serve.py` is the same server plus `Cache-Control: no-store`.
 If you have already been bitten by that (a stale page that will not update),
 the cached copies clear with a hard reload: **Ctrl+Shift+R**.
 
+## After editing anything in `assets/`
+
+```bash
+python site/stamp_assets.py
+```
+
+It rewrites every CSS and JS reference to `assets/site.css?v=<hash>`, keyed to a
+hash of the file itself. GitHub Pages lets browsers cache assets, so without
+this an edited stylesheet keeps serving from cache after a deploy — you reload,
+nothing changes, and the deploy looks broken when it is not. Keying the stamp to
+the content rather than to a number someone has to remember means it busts
+exactly when the file changes and never otherwise. Idempotent, so running it
+when nothing changed does nothing.
+
 ## Rebuild the data
 
 ```bash
