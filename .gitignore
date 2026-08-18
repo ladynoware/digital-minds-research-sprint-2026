@@ -18,6 +18,12 @@ data/.adjudications*
 
 !data/.gitkeep
 
+# The published dataset, released with the paper. Subjects were told at consent
+# that the whole dataset would be published; these are the files that keeps.
+!data/whoami.duckdb
+!data/raw/
+!data/run_manifest.jsonl
+
 # Derived working files. The corpus dump is a view of the database, which is
 # itself deliberately exported rather than committed.
 analysis/_corpus/
