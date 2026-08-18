@@ -28,3 +28,7 @@ data/.adjudications*
 # itself deliberately exported rather than committed.
 analysis/_corpus/
 data/raw_analysis/
+
+# Local working folders — drafts and video sources, deliberately not published.
+video/
+paper/
